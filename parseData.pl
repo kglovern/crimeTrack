@@ -89,7 +89,7 @@ while (my ($year, $locs) = each %crimeData) {
                $outputStr = $outputStr.$COMMA."0";
             }
          }
-         print $fh $outputStr."\n";
+         print $fh $outputStr."\n"; # Print the line to the current file
       }
    }
    close $fh
