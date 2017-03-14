@@ -85,9 +85,11 @@ while (my ($year, $locs) = each %crimeData) {
             if (exists $stats->{$field}) {
                my $value = $stats->{$field};
                $outputStr = $outputStr.$COMMA.$value;
-               print $fh $outputStr."\n";
+            } else {
+               $outputStr = $outputStr.$COMMA."0";
             }
          }
+         print $fh $outputStr."\n";
       }
    }
    close $fh
