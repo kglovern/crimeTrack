@@ -2,8 +2,7 @@
 
 #
 # TODO:
-#  - Error check missing fields
-#  - Determine exactly which fields we want from crime stats
+#  - Determine exactly which sta fields we want from crime stats
 #  - Output missing fields to error file
 #  - Parse population data
 #  - Parse economic data
@@ -29,7 +28,7 @@ my $fh;
 my $outputStr;
 # Arrays
 my @records;
-my @relevantFields = ("Actual incidents", "Total, adult charged", "Total, youth charged");
+my @relevantFields;
 # Hashes
 my %crimeData;
 
@@ -46,7 +45,8 @@ if ($#ARGV != 0) {
 #
 # Attempt to open and parse the crime stats file
 #
-print "Reformating crime data\nProvided file: $crimeStatsFile\n";
+print "Provided crime stats file: $crimeStatsFile\n";
+
 open $fh, '<', $crimeStatsFile
    or die "Unable to open $crimeStatsFile\n";
 
@@ -68,6 +68,14 @@ foreach my $rec ( @records ) {
 #
 # Output the data into a new file format
 #
+
+# What statistic fields we want
+@relevantFields = ("Actual incidents",
+                   "Rate per 100,000 population",
+                   "Total, adult charged",
+                   "Total, youth charged",
+                   "Total, persons charged");
+
 while (my ($year, $locs) = each %crimeData) {
    my $yearFile = $dataLoc.$year."Crime.csv";
 
