@@ -73,8 +73,7 @@ foreach my $rec ( @records ) {
 @relevantFields = ("Actual incidents",
                    "Rate per 100,000 population",
                    "Total, adult charged",
-                   "Total, youth charged",
-                   "Total, persons charged");
+                   "Total, youth charged");
 
 while (my ($year, $locs) = each %crimeData) {
    my $yearFile = $dataLoc.$year."Crime.csv";
