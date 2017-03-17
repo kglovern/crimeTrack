@@ -22,7 +22,7 @@ use Text::CSV  1.32;
 my $COMMA = q{,};
 my $EMPTY = q{};
 my $dataLoc = q{data/};
-my $csv = Text::CSV->new({ binary => 1, sep_char => $COMMA });
+my $csv = Text::CSV->new({ binary=> 1, sep_char => $COMMA });
 my $crimeStatsFile;
 my $fh;
 my $outputStr;
@@ -81,7 +81,7 @@ while (my ($year, $locs) = each %crimeData) {
 
    print "Outputting: $yearFile\n";
 
-   open $fh, ">", $yearFile
+   open $fh, ">:encoding(utf8)", $yearFile
       or die "Unable to open $yearFile for writing";
 
    while (my ($loc, $violations) = each %$locs) {
