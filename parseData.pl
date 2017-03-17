@@ -83,6 +83,7 @@ while (my ($year, $locs) = each %crimeData) {
    open $fh, ">:encoding(utf8)", $yearFile
       or die "Unable to open $yearFile for writing";
 
+   print $fh "\"Geo\",\"Vio\",\"Actual incidents\",\"Rate Per 100,000\",\"Adults charged\",\"Youth charged\"\n";
    while (my ($loc, $violations) = each %$locs) {
       while (my ($violation, $stats) = each %$violations) {
 
