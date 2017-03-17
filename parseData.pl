@@ -90,7 +90,7 @@ while (my ($year, $locs) = each %crimeData) {
 
          foreach my $field ( @relevantFields ) {
             if (exists $stats->{$field}) {
-               my $value = $stats->{$field};
+               my $value = ($stats->{$field} eq "..") ? 0 : $stats->{$field};
                $outputStr = $outputStr.$COMMA.$value;
             } else {
                $outputStr = $outputStr.$COMMA."0";
