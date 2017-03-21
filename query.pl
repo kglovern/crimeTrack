@@ -3,7 +3,9 @@
 #
 # TODO:
 #  - Everything
-#
+#  - Allow multiple violations
+#  - Alow multiple geographies
+#  - Do we need actual incident count?
 
 #
 #   Packages and modules
@@ -23,6 +25,8 @@ my $queryFile;
 my $crimeDataFile;
 my $startYear;
 my $endYear;
+my $geo;
+my $vio;
 my $questionType;
 my $csv = Text::CSV->new ({ binary=> 1, sep_char => $COMMA});
 #   Arrays
@@ -51,6 +55,7 @@ close $fh;
 
 #
 # Determine what we're asking
+# TODO:  Multiple question switch
 #
 foreach my $query ( @queries ) {
     if ($csv->parse ($query)) {
@@ -58,6 +63,8 @@ foreach my $query ( @queries ) {
         $questionType = $fields[0];
         $startYear = $fields[1];
         $endYear = $fields[2];
+        $geo = $fields[3];
+        $vio = $fields[4];
     } else {
         exit;
     }
@@ -67,7 +74,7 @@ print "Question Type: $questionType\nStart Year: $startYear\nEnd Year: $endYear\
 
 #
 # Generate list of years to look at
-#
+# TODO: Error checking range - make sure we have at least start year
 while ($startYear <= $endYear) {
     push @years, $startYear;
     $startYear ++;
@@ -84,15 +91,31 @@ foreach my $year ( @years ) {
       or die "Unable to open data file $crimeDataFile\n";
 
    @records = <$fh>;
-
+   shift @records; #Get rid of header line
    close $fh;
 
    foreach my $record ( @records ) {
       if ($csv->parse($record)) {
          my @fields = $csv->fields();
-         $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
+         if ($fields[0] eq $geo) {
+            $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
+         }
       } else {
          warn "Couldn't parse record line\n";
       }
    }
 }
+
+#
+# Output to new file
+#
+
+open $fh, ">", "output.data"
+   or die "Unable to open file for outputting";
+
+print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
+foreach my $year ( @years ) {
+      my $RP1K = $data{$year}{$geo}->{$vio};
+      print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n";
+}
+close $fh;
