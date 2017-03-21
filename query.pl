@@ -2,7 +2,7 @@
 
 #
 # TODO:
-#  - Everything
+#  - CHECK IF KEY EXISTS - Default to 0 - Otherwise it blows up
 #  - Allow multiple violations
 #  - Alow multiple geographies
 #  - Do we need actual incident count?
@@ -70,7 +70,7 @@ foreach my $query ( @queries ) {
     }
 }
 
-print "Question Type: $questionType\nStart Year: $startYear\nEnd Year: $endYear\n";
+print "Question Type: $questionType\nData from Start Year: $startYear to End Year: $endYear\n";
 
 #
 # Generate list of years to look at
@@ -85,7 +85,7 @@ while ($startYear <= $endYear) {
 #
 foreach my $year ( @years ) {
    $crimeDataFile = $dataDir.$year."Crime.csv";
-   print "Looking in $crimeDataFile\n";
+   print "Parsing $crimeDataFile\n";
 
    open $fh, "<", $crimeDataFile
       or die "Unable to open data file $crimeDataFile\n";
@@ -110,12 +110,15 @@ foreach my $year ( @years ) {
 # Output to new file
 #
 
-open $fh, ">", "output.data"
+open $fh, ">:encoding(utf8)", "output.data"
    or die "Unable to open file for outputting";
 
 print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
 foreach my $year ( @years ) {
-      my $RP1K = $data{$year}{$geo}->{$vio};
+      my $RP1K = 0.00;
+      if (exists $data{$year}{$geo}{$vio}) {
+         $RP1K = $data{$year}{$geo}->{$vio};
+      }
       print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n";
 }
 close $fh;
