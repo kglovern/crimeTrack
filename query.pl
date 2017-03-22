@@ -119,6 +119,7 @@ foreach my $year ( @years ) {
       if (exists $data{$year}{$geo}{$vio}) {
          $RP1K = $data{$year}{$geo}->{$vio};
       }
-      print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n";
+      print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
+         or die "Unable to output line to file\n";
 }
 close $fh;
