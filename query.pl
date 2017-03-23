@@ -24,14 +24,14 @@ my $queryFile;
 my $crimeDataFile;
 my $startYear;
 my $endYear;
-my $geo;
-my $vio;
 my $questionType;
 my $csv = Text::CSV->new ({ binary=> 1, sep_char => $COMMA});
 #   Arrays
 my @years = ();
 my @queries;
 my @records;
+my @geos = ();
+my @vios = ();
 #   Hashes
 my %data;
 
@@ -62,8 +62,14 @@ foreach my $query ( @queries ) {
         $questionType = $fields[0];
         $startYear = $fields[1];
         $endYear = $fields[2];
-        $geo = $fields[3];
-        $vio = $fields[4];
+        if ($questionType < 4) {
+           push @geos, $fields[3];
+           push @vios, $fields[4];
+        } else {
+           push @geos, $fields[3];
+           push @vios, $fields[4];
+           push @vios, $fields[5];
+        }
     } else {
         exit;
     }
@@ -96,9 +102,7 @@ foreach my $year ( @years ) {
    foreach my $record ( @records ) {
       if ($csv->parse($record)) {
          my @fields = $csv->fields();
-         if ($fields[0] eq $geo) {
-            $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
-         }
+         $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
       } else {
          warn "Couldn't parse record line\n";
       }
@@ -113,12 +117,14 @@ open $fh, ">:encoding(utf8)", "output.data"
    or die "Unable to open file for outputting";
 
 print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
-foreach my $year ( @years ) {
-   my $RP1K = 0.00;
-   if (exists $data{$year}{$geo}{$vio}) {
-      $RP1K = $data{$year}{$geo}->{$vio};
+foreach my $vio ( @vios ) {
+   foreach my $year ( @years ) {
+      my $RP1K = 0.00;
+      if (exists $data{$year}{$geos[0]}{$vio}) {
+         $RP1K = $data{$year}{$geos[0]}->{$vio};
+      }
+      print $fh $year.$COMMA."\"$geos[0]\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
+         or die "Unable to output line to file\n";
    }
-   print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
-      or die "Unable to output line to file\n";
 }
 close $fh;
