@@ -2,7 +2,6 @@
 
 #
 # TODO:
-#  - CHECK IF KEY EXISTS - Default to 0 - Otherwise it blows up
 #  - Allow multiple violations
 #  - Alow multiple geographies
 #  - Do we need actual incident count?
@@ -115,11 +114,11 @@ open $fh, ">:encoding(utf8)", "output.data"
 
 print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
 foreach my $year ( @years ) {
-      my $RP1K = 0.00;
-      if (exists $data{$year}{$geo}{$vio}) {
-         $RP1K = $data{$year}{$geo}->{$vio};
-      }
-      print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
-         or die "Unable to output line to file\n";
+   my $RP1K = 0.00;
+   if (exists $data{$year}{$geo}{$vio}) {
+      $RP1K = $data{$year}{$geo}->{$vio};
+   }
+   print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
+      or die "Unable to output line to file\n";
 }
 close $fh;
