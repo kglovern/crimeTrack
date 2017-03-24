@@ -1,11 +1,9 @@
 #!/usr/bin/perl
 
-#
 # TODO:
 #  - Any and all error checking
 #  - Year range sanitation - currently dies if file doesn't exist
 #  - Are we using a second data set?  How to include?
-#  -
 
 #
 #   Packages and modules
@@ -81,7 +79,7 @@ foreach my $query ( @queries ) {
     }
 }
 
-print "Question Type: $questionType\nData from Start Year: $startYear to End Year: $endYear\n";
+print "\nRetrieving query data from $startYear to $endYear\n";
 
 #
 # Generate list of years to look at
