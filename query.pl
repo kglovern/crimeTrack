@@ -2,9 +2,10 @@
 
 #
 # TODO:
-#  - Allow multiple violations
-#  - Alow multiple geographies
-#  - Do we need actual incident count?
+#  - Any and all error checking
+#  - Year range sanitation - currently dies if file doesn't exist
+#  - Are we using a second data set?  How to include?
+#  -
 
 #
 #   Packages and modules
@@ -25,6 +26,8 @@ my $crimeDataFile;
 my $startYear;
 my $endYear;
 my $questionType;
+my $geoCount;
+my $geoStart = 4;
 my $csv = Text::CSV->new ({ binary=> 1, sep_char => $COMMA});
 #   Arrays
 my @years = ();
@@ -54,21 +57,24 @@ close $fh;
 
 #
 # Determine what we're asking
-# TODO:  Multiple question switch
 #
 foreach my $query ( @queries ) {
     if ($csv->parse ($query)) {
         my @fields = $csv->fields();
+
+        # We know these fields are consistent between question types/queries.
         $questionType = $fields[0];
         $startYear = $fields[1];
         $endYear = $fields[2];
-        if ($questionType < 4) {
-           push @geos, $fields[3];
-           push @vios, $fields[4];
-        } else {
-           push @geos, $fields[3];
-           push @vios, $fields[4];
-           push @vios, $fields[5];
+        $geoCount = $fields[3];
+
+        # Push N geos into the array - using the $geoCount offset to know when geos stop
+        for (my $i  = $geoStart; $i < ($geoStart + $geoCount); $i++) {
+           push @geos, $fields[$i];
+        }
+        #push N violations into the Arrays - from offset to end of line
+        for (my $i = $geoStart + $geoCount; $i <= $#fields; $i ++) {
+           push @vios, $fields[$i];
         }
     } else {
         exit;
@@ -116,15 +122,18 @@ foreach my $year ( @years ) {
 open $fh, ">:encoding(utf8)", "output.data"
    or die "Unable to open file for outputting";
 
+print $fh "$questionType,$startYear,$endYear\n";
 print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
-foreach my $vio ( @vios ) {
-   foreach my $year ( @years ) {
-      my $RP1K = 0.00;
-      if (exists $data{$year}{$geos[0]}{$vio}) {
-         $RP1K = $data{$year}{$geos[0]}->{$vio};
+foreach my $geo ( @geos ) {
+   foreach my $vio ( @vios ) {
+      foreach my $year ( @years ) {
+         my $RP1K = 0.00;
+         if (exists $data{$year}{$geo}{$vio}) {
+            $RP1K = $data{$year}{$geo}->{$vio};
+         }
+         print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
+            or die "Unable to output line to file\n";
       }
-      print $fh $year.$COMMA."\"$geos[0]\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
-         or die "Unable to output line to file\n";
    }
 }
 close $fh;
