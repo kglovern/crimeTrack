@@ -26,6 +26,7 @@ my $endYear;
 my $questionType;
 my $geoCount;
 my $geoStart = 4;
+my $outputHeader;
 my $csv = Text::CSV->new ({ binary=> 1, sep_char => $COMMA});
 #   Arrays
 my @years = ();
@@ -66,11 +67,14 @@ foreach my $query ( @queries ) {
         $endYear = $fields[2];
         $geoCount = $fields[3];
 
-        # Push N geos into the array - using the $geoCount offset to know when geos stop
+        # Make an output header for the output file later
+        $outputHeader = "$questionType,$startYear,$endYear\n";
+
+        # Push N geographic locs into array - using the $geoCount offset to know when geos stop
         for (my $i  = $geoStart; $i < ($geoStart + $geoCount); $i++) {
            push @geos, $fields[$i];
         }
-        #push N violations into the Arrays - from offset to end of line
+        #push N violations into array - from offset to end of line
         for (my $i = $geoStart + $geoCount; $i <= $#fields; $i ++) {
            push @vios, $fields[$i];
         }
@@ -80,7 +84,6 @@ foreach my $query ( @queries ) {
 }
 
 print "\nRetrieving query data from $startYear to $endYear\n";
-
 #
 # Generate list of years to look at
 # TODO: Error checking range - make sure we have at least start year
@@ -94,22 +97,28 @@ while ($startYear <= $endYear) {
 #
 foreach my $year ( @years ) {
    $crimeDataFile = $dataDir.$year."Crime.csv";
-   print "Parsing $crimeDataFile\n";
 
-   open $fh, "<", $crimeDataFile
-      or die "Unable to open data file $crimeDataFile\n";
+   # Check if the file actually exists - do we have data, do we have data for that year?
+   if (-f $crimeDataFile ) {
+      print "Parsing $crimeDataFile\n";
 
-   @records = <$fh>;
-   shift @records; #Get rid of header line
-   close $fh;
+      open $fh, "<", $crimeDataFile
+         or die "Unable to open data file $crimeDataFile\n";
 
-   foreach my $record ( @records ) {
-      if ($csv->parse($record)) {
-         my @fields = $csv->fields();
-         $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
-      } else {
-         warn "Couldn't parse record line\n";
+      @records = <$fh>;
+      shift @records; #Get rid of header line
+      close $fh;
+
+      foreach my $record ( @records ) {
+         if ($csv->parse($record)) {
+            my @fields = $csv->fields();
+            $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
+         } else {
+            warn "Couldn't parse record line\n";
+         }
       }
+   } else {
+      warn "File $crimeDataFile does not exist! Is the year out of range?\n";
    }
 }
 
@@ -120,17 +129,21 @@ foreach my $year ( @years ) {
 open $fh, ">:encoding(utf8)", "output.data"
    or die "Unable to open file for outputting";
 
-print $fh "$questionType,$startYear,$endYear\n";
+print $fh $outputHeader;
 print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
 foreach my $geo ( @geos ) {
    foreach my $vio ( @vios ) {
       foreach my $year ( @years ) {
-         my $RP1K = 0.00;
-         if (exists $data{$year}{$geo}{$vio}) {
-            $RP1K = $data{$year}{$geo}->{$vio};
+         if (exists $data{$year}) {
+            my $RP1K = 0.00;
+            if (exists $data{$year}{$geo}{$vio}) {
+               $RP1K = $data{$year}{$geo}->{$vio};
+            }
+            print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
+               or die "Unable to output line to file\n";
+         } else {
+            print "No data retrieved for $geo - $vio in $year, ignoring\n";
          }
-         print $fh $year.$COMMA."\"$geo\"".$COMMA."\"$vio\"".$COMMA.$RP1K."\n"
-            or die "Unable to output line to file\n";
       }
    }
 }
