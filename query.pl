@@ -68,7 +68,7 @@ foreach my $query ( @queries ) {
         $geoCount = $fields[3];
 
         # Make an output header for the output file later
-        $outputHeader = "$questionType,$startYear,$endYear\n";
+        $outputHeader = "$query";
 
         # Push N geographic locs into array - using the $geoCount offset to know when geos stop
         for (my $i  = $geoStart; $i < ($geoStart + $geoCount); $i++) {
