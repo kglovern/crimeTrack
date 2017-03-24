@@ -112,7 +112,7 @@ foreach my $year ( @years ) {
       foreach my $record ( @records ) {
          if ($csv->parse($record)) {
             my @fields = $csv->fields();
-            $data{$year}{$fields[0]}{$fields[1]} = $fields[3];
+            $data{$year}{$fields[0]}{$fields[1]} = $fields[2];
          } else {
             warn "Couldn't parse record line\n";
          }
