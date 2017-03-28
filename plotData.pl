@@ -9,7 +9,10 @@ use Statistics::R;
 
 my $infilename;
 my $pdffilename;
-my $qType;
+my $question;
+my $graphTitle;
+
+my @fields;
 
 #
 #   Check that you have the right number of parameters
@@ -26,9 +29,26 @@ if ($#ARGV != 1 ) {
 print "input file = $infilename\n";
 print"pdf file = $pdffilename\n";
 
+
+
+#
+#   Fields:
+#   [0]: question type (1, 2, 3, 4)
+#   [1]: start year
+#   [2]: end year
+#   [3]: number of GEOs
+#   [4 to 4 + # of GEOs]: GEOs (up to fields[3] number of them)
+#   [3 + number of GEOs]: Violation
+#
 open my $fh, "<", $infilename;
-$qType = <$fh>;
+$question = <$fh>;
+print "Question: ".$question;
+@fields = split (',', $question);
 close $fh;
+chomp ($fields[$#fields]);
+$fields[$#fields] =~ tr/"//d;
+$graphTitle = $fields[$#fields]." from ".$fields[1]." to ".$fields[2];
+print "Title: ".$graphTitle."\n";
 
 # Create a communication bridge with R and start R
 my $R = Statistics::R->new();
@@ -46,7 +66,7 @@ $R->run(q`library(ggplot2)`);
 $R->run(qq`data <- read.csv("$infilename", skip = 1)`);
 
 # plot the data as a line plot with each point outlined
-$R->run(q`ggplot(data, aes(x=Year, y=RP1K, colour=Vio, group=Vio)) + geom_line() + geom_point(size=2) + geom_text(aes(label=RP1K),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=3) + ggtitle("Crime Trends") + ylab("Rate per 100,000 population") + labs(fill = "Violation") + ylim(min(data$RP1K), max(data$RP1K)) + xlim(min(data$Year), max(data$Year)) + scale_y_continuous(breaks=seq(min(data$RP1K), max(data$RP1K), 1)) + scale_x_continuous(breaks=seq(min(data$Year), max(data$Year), 1)) + theme(axis.text.x = element_text(angle = 45, hjust = 1))`);
+$R->run(q`ggplot(data, aes(x=Year, y=RP1K, colour=Geo, group=Geo)) + geom_line() + geom_point(size=2) + geom_text(aes(label=RP1K),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=3) + ggtitle($graphTitle) + ylab("Actual Incidents") + labs(fill = "Violation") + ylim(min(data$RP1K), max(data$RP1K)) + xlim(min(data$Year), max(data$Year)) + scale_y_continuous(breaks=seq(min(data$RP1K), max(data$RP1K), 1)) + scale_x_continuous(breaks=seq(min(data$Year), max(data$Year), 1)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
 # close down the PDF device
 $R->run(q`dev.off()`);
 
