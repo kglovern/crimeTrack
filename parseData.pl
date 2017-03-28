@@ -72,7 +72,15 @@ foreach my $rec ( @records ) {
          my @parts = split (", ", $loc);
          my $city = $parts[0];
          my $province = $parts[1];
-         $locations{$province}{$city} = $cityID;
+         if (not $province =~ / +part$/) { #Gatineau/Ottawa split
+            $locations{$province}{$city} = $cityID;
+         } else {
+            if ($province =~ /^Ontario/) { #shunt them into appropriate province
+               $locations{"Ontario"}{$city} = $cityID;
+            } else {
+               $locations{"Quebec"}{$city} = $cityID;
+            }
+         }
       }
 
    } else {
@@ -123,15 +131,18 @@ while (my ($year, $locs) = each %crimeData) {
 #
 
 print "\nOutputting formatted location data\nFile located at $dataLoc"."locs.data";
-open $fh, ">:encoding(utf8)", $dataLoc."locs.data";
+open $fh, ">:encoding(utf8)", $dataLoc."locs.data\n";
+
 
 while (my ($province, $cities) = each %locations) {
-   print $fh "\"$province\"\n";
-   while (my ($city, $id) = each %$cities) {
-   print $fh "\"$city\",$cityID\n";
-   $cityID ++;
+   if (not $province =~ /^Ontario\/Quebec$/) {
+      print $fh "\"$province\"\n";
+      while (my ($city, $id) = each %$cities) {
+         print $fh "\"$city\",$cityID\n";
+         $cityID ++;
+      }
    }
 }
 close $fh;
 
-print "Outputting formatted violation data\n";
+print "\nOutputting formatted violation data\n";
