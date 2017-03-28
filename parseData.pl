@@ -122,7 +122,7 @@ while (my ($year, $locs) = each %crimeData) {
 # Output the location data
 #
 
-print "Outputting formatted location data\n"
+print "\nOutputting formatted location data\nFile located at $dataLoc"."locs.data";
 open $fh, ">:encoding(utf8)", $dataLoc."locs.data";
 
 while (my ($province, $cities) = each %locations) {

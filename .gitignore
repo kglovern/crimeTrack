@@ -1,3 +1,4 @@
-*.data
+output.data
 crimedata.csv
 *.pdf
+.DS_Store
