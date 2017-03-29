@@ -15,10 +15,12 @@ my $location;
 my $locAmount = 1;
 my $crimeAType = 0;
 my $crimeBType = 0;
+my $input;
 my $csv = Text::CSV->new({ binary=>1 });
 use version;   our $VERSION = qv('5.16.0');
 # Arrays
-my @crimeTypes = ("first degree murder", "second degree murder", "manslaughter", "attempted murder");
+my @violations;
+my @results;
 # Hash Tables
 my %locData;
 my %vioData;
@@ -77,24 +79,23 @@ chomp($location = <>);
 #		LOCATION WILL LATER BE CHANGED
 #
 
-print "Please enter a keyword for crime A, all possible crimes will be displayed.\n";
-chomp($crimeAType = <>);
-foreach my $crime (@crimeTypes) {
-    print "$crime\n";
-}
-
-if ($qType == 1) {
-    print "Please enter the type of crime for crime B.\n";
-    print "1. Violent crime\n";
-    print "2. Traffic violations\n";
-    print "3. Federal statute crimes\n";
-    print "4. Drug violations\n";
-    chomp($crimeBType = <>);
-    while ($crimeBType < 1 || $crimeBType > 4) {
-        print "Incorrect entry, try again.\n";
-        chomp($crimeBType = <>);
+#
+# Crime Lookup
+#
+print "Please enter a keyword to search for a related violation\n";
+chomp($input = <>);
+@results = searchHash($input, %vioData);
+if ($#results > 0) {
+    foreach my $result ( @results ) {
+        print "$result\n";
     }
+} else {
+    print "No results found\n";
 }
+#
+# End Crime Lookup
+#
+
 
 if ($qType == 4) {
     print $fh $qType.",".$sYear.",".$eYear.",".$locAmount.",".$location.",\"".$crimeAType."\",\"".$crimeBType."\"";
@@ -104,6 +105,10 @@ else {
 }
 
 close $fh;
+
+###################################################################################################
+#   Subroutines
+###################################################################################################
 
 #
 # Return a hash map from a specified file
@@ -136,9 +141,11 @@ sub parseToHash {
 #
 sub searchHash {
     my ($searchTerm, %data) = (@_);
+    my @matches;
     while (my ($key, $value) = each (%data)) {
         if ($key =~ /$searchTerm/i) {
-            print (($value+1).") $key\n");
+            push @matches, $key;
         }
     }
+    return @matches;
 }
