@@ -6,20 +6,24 @@
 #
 
 # Make PDF Directory to store output if it doesn't exist
-[ ! -d "PDF" ] && mkdir PDF
+[ ! -d "OUTPUT" ] && mkdir OUTPUT
 # Make Question directory to store past queries
-[ ! -d "QUERY"] && mkdir QUERY
+[ ! -d "INPUT" ] && mkdir INPUT
 
 #Make an output pdf file name
 NOW=$(date +'%H%M%S')
-OUTFILE="PDF/output-$NOW.pdf"
-INFILE="QUERY/input-$NOW.pdf"
+OUTFILE="OUTPUT/output-$NOW.pdf"
+INFILE="INPUT/input-$NOW"
 
 # Run the user interface to generate the question query
 perl uInterface.pl $INFILE
-# Generate data requested by the query
-perl query.pl $INFILE
-# Generate a pdf output
-clear
-perl plotCrime.pl output.data $OUTFILE
-echo "Answer PDF located at $OUTFILE"
+if [ -f INFILE ] then
+    echo "Generating query results"
+    # Generate data requested by the query
+    perl query.pl $INFILE
+    # Generate a pdf output
+    clear
+    perl plotData.pl output.data $OUTFILE
+    clear
+    echo "Answer PDF located at $OUTFILE"
+fi
