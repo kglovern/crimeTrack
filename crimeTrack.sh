@@ -10,7 +10,7 @@ NOW=$(date +'%H%M%S')
 OUTFILE="output-$NOW.pdf"
 
 # Run the user interface to generate the question query
-perl ui.pl
+perl uInterface.pl
 # Generate data requested by the query
 perl query.pl input.que
 # Generate a pdf output

@@ -1,14 +1,6 @@
 #!/usr/bin/perl
 
 #
-# TODO:
-#  - Determine exactly which sta fields we want from crime stats
-#  - Output missing fields to error file
-#  - Parse population data
-#  - Parse economic data
-#
-
-#
 #   Packages and modules
 #
 use strict;
