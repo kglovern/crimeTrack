@@ -7,7 +7,8 @@ use Text::CSV;
 #
 # Variables
 #
-my $file = "outputfile.txt";
+my $SEP = q{,};
+my $file = "input.que";
 my $qType = 0;
 my $sYear = 0;
 my $eYear = 0;
@@ -16,10 +17,13 @@ my $locAmount = 1;
 my $crimeAType = 0;
 my $crimeBType = 0;
 my $input;
+my $outputStr;
+my $geoCount = 1;
 my $csv = Text::CSV->new({ binary=>1 });
 use version;   our $VERSION = qv('5.16.0');
 # Arrays
 my @violations;
+my @locations;
 my @results;
 # Hash Tables
 my %locData;
@@ -34,9 +38,6 @@ sub searchHash;
 # Load in violation data
 #
 %vioData = parseToHash("data/vios.data");
-
-open (my $fh, ">", $file)
-    or die "Unable to open output file\n";
 
 print "Please choose a question type.\n";
 print "1. How does crime A compare to crime B?\n";
@@ -85,10 +86,20 @@ chomp($location = <>);
 print "Please enter a keyword to search for a related violation\n";
 chomp($input = <>);
 @results = searchHash($input, %vioData);
-if ($#results > 0) {
-    foreach my $result ( @results ) {
-        print "$result\n";
-    }
+if ($#results >= 0) {
+
+   print "Terms matching $input:\n";
+   for my $index ( 0 .. $#results ) {
+      print (($index + 1).") $results[$index]\n");
+   }
+
+   print "Select the number corresponding to the violation\n";
+   chomp($input = <>);
+   if ($input >= 0 && $input <= ($#results + 1)) {
+      push @violations, $results[$input - 1];
+   } else {
+      print "Invalid index\n";
+   }
 } else {
     print "No results found\n";
 }
@@ -96,13 +107,31 @@ if ($#results > 0) {
 # End Crime Lookup
 #
 
+#
+# Format output string for printing to file
+#
 
-if ($qType == 4) {
-    print $fh $qType.",".$sYear.",".$eYear.",".$locAmount.",".$location.",\"".$crimeAType."\",\"".$crimeBType."\"";
+push @locations, "Ontario";
+# Initial information that's consistent across every question
+$outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
+
+# Now add location count and locations
+$geoCount = $#locations + 1;
+$outputStr = $outputStr.$geoCount;
+foreach my $loc ( @locations ) {
+   $outputStr = $outputStr.$SEP."\"".$loc."\"";
 }
-else {
-    print $fh $qType.",".$sYear.",".$eYear.",".$locAmount.",".$location.",\"".$crimeAType."\"";
+
+# Now add all the violations we're looking at
+foreach my $violation ( @violations ) {
+   $outputStr = $outputStr.$SEP."\"".$violation."\"";
 }
+
+# Output it to the file
+open (my $fh, ">", $file)
+    or die "Unable to open output file\n";
+
+print $fh $outputStr;
 
 close $fh;
 
