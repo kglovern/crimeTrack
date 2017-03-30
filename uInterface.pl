@@ -8,17 +8,14 @@ use Text::CSV;
 # Variables
 #
 my $SEP = q{,};
-my $file = "input.que";
+my $file = $ARGV[0];
 my $qType = 0;
 my $sYear = 0;
 my $eYear = 0;
-my $location;
-my $locAmount = 1;
-my $crimeAType = 0;
-my $crimeBType = 0;
 my $input;
 my $outputStr;
-my $geoCount = 1;
+my $location = "";
+my $geoCount = 0;
 my $csv = Text::CSV->new({ binary=>1 });
 use version;   our $VERSION = qv('5.16.0');
 # Arrays
@@ -32,50 +29,54 @@ my %vioData;
 #
 # Subroutine Prototypes
 #
+sub getInput;
 sub parseToHash;
 sub searchHash;
+sub nixAccents;
 #
 # Load in violation data
 #
 %vioData = parseToHash("data/vios.data");
 
-print "Please choose a question type.\n";
-print "1. How does crime A compare to crime B?\n";
-print "2. Is crime A increasing, decreasing, or staying the same?\n";
-print "3. Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
-print "4. In what province is crime A highest/ lowest?\n";
-chomp($qType =  <>);
+#
+# Header
+#
+
+#
+# Main Menu
+#
+print "1) How does crime A compare to crime B?\n";
+print "2) Is crime A increasing, decreasing, or staying the same?\n";
+print "3) Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
+print "4) In what province is crime A highest/ lowest?\n";
 while ($qType < 1 || $qType > 4) {
-    print "Incorrect entry, try again.\n";
-    chomp($qType = <>);
+   $qType = getInput("Please choose a question type:");
+   if ($qType < 1 && $qType > 4) {
+      print "Not a valid question type\n";
+   }
 }
 
-if ($locAmount < 1 || $locAmount > 4) {
-    $locAmount = 2;
+# Get start year
+while (! ($sYear =~ /\d{4}/)) {
+    $sYear = getInput("Please enter the start year.");
+    if (! ($sYear =~ /\d{4}/)) {
+      print "Not a valid year - expected format: NNNN\n";
+    }
 }
 
-print "Please enter the start year.\n";
-chomp($sYear = <>);
-while ($sYear < 1998 || $sYear > 2015) {
-    print "Sorry, we do not have data for that year, try again.\n";
-    chomp($sYear = <>);
-}
-
-print "Please enter the end year. To look only at the start year, print any number less than it.\n";
-chomp($eYear = <>);
-if ($eYear < $sYear) {
-    $eYear = $sYear;
-}
-while ($eYear > 2015) {
-    print "Sorry, we do not have data for that year, try again.\n";
-    chomp($eYear = <>);
+# Get end year
+while (! ($eYear =~ /\d{4}/)) {
+   $eYear = getInput("Please enter the end year");
+   if (! ($eYear =~ /\d{4}/)) {
+     print "Not a valid year - expected format: NNNN\n";
+   }
 }
 
 #
 #		LOCATION WILL LATER BE CHANGED
 #
 print "Please enter the location\n";
-chomp($location = <>);
+chomp($location = <STDIN>);
 #
 #		LOCATION WILL LATER BE CHANGED
 #
@@ -83,25 +84,27 @@ chomp($location = <>);
 #
 # Crime Lookup
 #
-print "Please enter a keyword to search for a related violation\n";
-chomp($input = <>);
+
+$input = getInput("Please enter a keyword to search for a related violation");
+
 @results = searchHash($input, %vioData);
-if ($#results >= 0) {
+while (! @violations ) {
+   if ($#results >= 0) {
 
-   print "Terms matching $input:\n";
-   for my $index ( 0 .. $#results ) {
-      print (($index + 1).") $results[$index]\n");
-   }
+      print "Terms matching $input:\n";
+      for my $index ( 0 .. $#results ) {
+         print (($index + 1).") $results[$index]\n");
+      }
 
-   print "Select the number corresponding to the violation\n";
-   chomp($input = <>);
-   if ($input >= 0 && $input <= ($#results + 1)) {
-      push @violations, $results[$input - 1];
+      $input = getInput("Select the number corresponding to the violation");
+      if ($input >= 0 && $input <= ($#results + 1)) {
+         push @violations, $results[$input - 1];
+      } else {
+         print "Invalid index\n";
+      }
    } else {
-      print "Invalid index\n";
+       print "No results found\n";
    }
-} else {
-    print "No results found\n";
 }
 #
 # End Crime Lookup
@@ -140,6 +143,20 @@ close $fh;
 ###################################################################################################
 
 #
+# Force the user to enter something that's not an empty string, and return the result
+# Usage: getInput("Message to print");
+#
+sub getInput {
+   my $message = shift;
+   my $result = "";
+   while ($result eq "") {
+      print "$message\n";
+      chomp($result = <STDIN>);
+   }
+   return $result
+}
+
+#
 # Return a hash map from a specified file
 # Usage: parseToHash("File Location");
 #
@@ -164,6 +181,7 @@ sub parseToHash {
 
     return %dataHash;
 }
+
 #
 # Search a hash map and print any close matches
 # Usage: searchHash("Search String", %hash_to_search)
@@ -177,4 +195,14 @@ sub searchHash {
         }
     }
     return @matches;
+}
+
+#
+# Return a string with the vowels being fuzzy for accented char searching
+# Usage: nixAccents("string to remove accents from");
+#
+sub nixAccents {
+   my $input = shift;
+   $input =~ s/[^a-z]/\*/gi;
+   return $input;
 }
