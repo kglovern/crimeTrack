@@ -33,13 +33,14 @@ sub getInput;
 sub parseToHash;
 sub searchHash;
 sub nixAccents;
+
 #
 # Load in violation data
 #
 %vioData = parseToHash("data/vios.data");
 
 #
-# Header
+# Header - Some sort of welcome message
 #
 
 #
@@ -91,9 +92,9 @@ $input = getInput("Please enter a keyword to search for a related violation");
 while (! @violations ) {
    if ($#results >= 0) {
 
-      print "Terms matching $input:\n";
+      print "\nTerms matching $input:\n";
       for my $index ( 0 .. $#results ) {
-         print (($index + 1).") $results[$index]\n");
+         printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
       $input = getInput("Select the number corresponding to the violation");
