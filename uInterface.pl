@@ -38,6 +38,7 @@ sub getInput;
 sub parseToHash;
 sub loadLocs;
 sub returnProvinceArr;
+sub returnCityArr;
 sub searchHash;
 sub nixAccents;
 
@@ -54,8 +55,8 @@ sub nixAccents;
 #
 # Main Menu
 #
-print "1) How does crime A compare to crime B?\n";
-print "2) Is crime A increasing, decreasing, or staying the same?\n";
+print "1) Is crime A increasing, decreasing, or staying the same?\n";
+print "2) How does crime A rates compare to crime B rates in a certain geography?\n";
 print "3) Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
 print "4) In what province is crime A highest/ lowest?\n";
 while ($qType < 1 || $qType > 4) {
@@ -101,7 +102,17 @@ while (! @locations) {
       print "No sub locations with $province, defaulting to entire province\n";
       push @locations, $province;
    } else {
-      print "Do stuff\n"
+      print "\nCities within $province:\n";
+
+      my @cities = returnCityArr($province, %locData);
+      for my $index (0 .. $#cities) {
+         printf "%d) %s\n", $index, $cities[$index];
+      }
+      $input = getInput("Please select a sub location");
+      my $city = $cities[$input-1];
+      my $loc = "$city, $province";
+      push @locations, $loc;
+
    }
 }
 
@@ -204,7 +215,6 @@ sub parseToHash {
         } else {
             warn "Unable to parse line $line\n";
         }
-
     }
     close $fh;
 
@@ -260,6 +270,16 @@ sub returnProvinceArr {
    return @arr;
 }
 
+sub returnCityArr {
+   my ($prov, %data) = (@_);
+   my @arr;
+   push @arr, "All Locations";
+   while (my ($key, $value) = each %data->{$prov}) {
+      push @arr, $key;
+   }
+   return @arr;
+}
+
 #
 # Search a hash map and print any close matches
 # Usage: searchHash("Search String", %hash_to_search)
@@ -280,7 +300,7 @@ sub searchHash {
 # Usage: nixAccents("string to remove accents from");
 #
 sub nixAccents {
-   my $input = shift;
-   $input =~ s/[^a-z]/\*/gi;
-   return $input;
+   my $string = shift;
+   $string =~ s/[^a-z]/\*/gi;
+   return $string;
 }
