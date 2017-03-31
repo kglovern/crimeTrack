@@ -109,7 +109,7 @@ while (! @locations) {
          printf "%d) %s\n", $index, $cities[$index];
       }
       $input = getInput("Please select a sub location");
-      my $city = $cities[$input-1];
+      my $city = $cities[$input];
       my $loc = "$city, $province";
       push @locations, $loc;
 
