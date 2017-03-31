@@ -2,25 +2,23 @@
 
 use strict;
 use warnings;
-use version;	our $VERSION = qv('5.16.0');
-use Text::CSV 1.32;
 
-#variable declaration
-my $file = "outputfile.txt";
-my $COMMA = q{,};
+use Text::CSV;
+
+#
+# Variables
+#
+
 my @records;
 my @locString;
 my @locNum;
 my @locProv;
-my $locFile = "locs.data";
+
 my $cityName;
-my $qType = 0;
-my $sYear = 0;
-my $eYear = 0;
+
 my $province;
 my $locAmount = 1;
-my $crimeAType = 0;
-my $crimeBType = 0;
+
 my $provCount = -1;
 my @locCity;
 my $city;
@@ -28,48 +26,76 @@ my $outputLocation;
 my $counter = 0;
 $locCity[0] = 0;
 my $i = 0;
-my $csv		= Text::CSV->new ({binary=> 1,sep_char => $COMMA });
 
+###
 
-#opens the output file to write to
-open (my $fh, ">", $file)
-    or die "error, file broken";
+my $SEP = q{,};
+my $file = $ARGV[0];
+my $qType = 0;
+my $sYear = 0;
+my $eYear = 0;
+my $input;
+my $outputStr;
+my $location = "";
+my $geoCount = 0;
+my $locFile = "data/locs.data";
+my $csv = Text::CSV->new({ binary=>1 });
+use version;   our $VERSION = qv('5.16.0');
+# Arrays
+my @violations;
+my @locations;
+my @results;
+# Hash Tables
+my %locData;
+my %vioData;
 
-#takes in question type
-print "Please choose a question type.\n";
-print "1. How does crime A compare to crime B?\n";
-print "2. Is crime A increasing, decreasing, or staying the same?\n";
-print "3. Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
-print "4. In what province is crime A highest/ lowest?\n";
-chomp($qType =  <>);
+#
+# Subroutine Prototypes
+#
+sub getInput;
+sub parseToHash;
+sub searchHash;
+sub nixAccents;
+
+#
+# Load in violation data
+#
+%vioData = parseToHash("data/vios.data");
+
+#
+# Header - Some sort of welcome message
+#
+
+#
+# Main Menu
+#
+print "1) How does crime A compare to crime B?\n";
+print "2) Is crime A increasing, decreasing, or staying the same?\n";
+print "3) Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
+print "4) In what province is crime A highest/ lowest?\n";
 while ($qType < 1 || $qType > 4) {
-    print "Incorrect entry, try again.\n";
-    chomp($qType = <>);
-}
-
-#takes the start and end year
-print "Please enter the start year.\n";
-chomp($sYear = <>);
-while ($sYear < 1998 || $sYear > 2015) {
-    print "Sorry, we do not have data for that year, try again.\n";
-    chomp($sYear = <>);
-}
-# $input =~ /[\d]{4}/
-
-print "Please enter the end year.\n";
-chomp($eYear = <>);
-if ($eYear < $sYear) {
-    $eYear = $sYear;
-}
-while ($eYear > 2015) {
-    print "Sorry, we do not have data for that year, try again.\n";
-    chomp($eYear = <>);
+   $qType = getInput("Please choose a question type:");
+   if ($qType < 1 && $qType > 4) {
+      print "Not a valid question type\n";
+   }
 }
 
 
+# Get start year
+while (! ($sYear =~ /\d{4}/)) {
+    $sYear = getInput("Please enter the start year.");
+    if (! ($sYear =~ /\d{4}/)) {
+      print "Not a valid year - expected format: NNNN\n";
+    }
+}
 
-
-
+# Get end year
+while (! ($eYear =~ /\d{4}/)) {
+   $eYear = getInput("Please enter the end year");
+   if (! ($eYear =~ /\d{4}/)) {
+     print "Not a valid year - expected format: NNNN\n";
+   }
+}
 
 #
 #START LOCATION
@@ -84,12 +110,12 @@ close $locations_fh;
 foreach my $locationRecord (@records) {
     if ($csv->parse($locationRecord)) { #stores cities and coresponding numbers
         my @masterFields = $csv->fields();
-        
+
         $locString[$i]   = $masterFields[0];
         $locNum[$i]      = $masterFields[1];
         $i++;
     } else {     #else statement stores provinces, with their represented number as a negtive
-        if (index(@records, $COMMA) == -1) {
+        if (index(@records, $SEP) == -1) {
             my @masterFields = $csv->fields();
             chomp $records[$i];
             $records[$i] = substr($records[$i], 1, length($records[$i])-2);
@@ -104,7 +130,7 @@ foreach my $locationRecord (@records) {
             $locCity[$provCount * (-1)-1] = $locNum[$counter];
             $provCount--;
             $i++;
-            
+
         }
     }
 }
@@ -167,47 +193,135 @@ elsif ($city == 0) {
     $outputLocation = "\"$hash{-$province},$hash{$city+1}\"";
 }
 print $outputLocation."\n";
+
 #
 #END LOCATION
 #
 
 
+#
+# Crime Lookup
+#
 
+$input = getInput("Please enter a keyword to search for a related violation");
 
+@results = searchHash($input, %vioData);
+while (! @violations ) {
+   if ($#results >= 0) {
 
+      print "\nTerms matching $input:\n";
+      for my $index ( 0 .. $#results ) {
+         printf "%d) %s\n", ($index + 1), $results[$index];
+      }
+
+      $input = getInput("Select the number corresponding to the violation");
+      if ($input >= 0 && $input <= ($#results + 1)) {
+         push @violations, $results[$input - 1];
+      } else {
+         print "Invalid index\n";
+      }
+   } else {
+       print "No results found\n";
+   }
+}
+#
+# End Crime Lookup
+#
 
 #
-#takes crime data (kevin doing this)
+# Format output string for printing to file
 #
-print "Please enter a keyword for crime A, all possible crimes will be displayed.\n";
-chomp($crimeAType = <>);
-#foreach my $crime (@crimeTypes) {
-#    if (index(lc($crimeTypes[$i]), lc($crimeAType)) != -1) {
-#        print "$crime\n";
-#    }
-#} 
 
-if ($qType == 1) {
-    print "Please enter the type of crime for crime B.\n";
-    print "1. Violent crime\n";
-    print "2. Traffic violations\n";
-    print "3. Federal statute crimes\n";
-    print "4. Drug violations\n";
-    chomp($crimeBType = <>);
-    while ($crimeBType < 1 || $crimeBType > 4) {
-        print "Incorrect entry, try again.\n";
-        chomp($crimeBType = <>);
-    }
+push @locations, "Ontario";
+# Initial information that's consistent across every question
+$outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
+
+# Now add location count and locations
+$geoCount = $#locations + 1;
+$outputStr = $outputStr.$geoCount;
+foreach my $loc ( @locations ) {
+   $outputStr = $outputStr.$SEP."\"".$loc."\"";
 }
 
-
-#output to the file
-
-if ($qType == 4) {
-print $fh $qType.",".$sYear.",".$eYear.",".$locAmount.",".$outputLocation.",\"".$crimeAType."\",\"".$crimeBType."\"";
+# Now add all the violations we're looking at
+foreach my $violation ( @violations ) {
+   $outputStr = $outputStr.$SEP."\"".$violation."\"";
 }
-else {
-print $fh $qType.",".$sYear.",".$eYear.",".$locAmount.",".$outputLocation.",\"".$crimeAType."\"";
-} 
+
+# Output it to the file
+open (my $fh, ">", $file)
+    or die "Unable to open output file\n";
+
+print $fh $outputStr;
+
 
 close $fh;
+
+###################################################################################################
+#   Subroutines
+###################################################################################################
+
+#
+# Force the user to enter something that's not an empty string, and return the result
+# Usage: getInput("Message to print");
+#
+sub getInput {
+   my $message = shift;
+   my $result = "";
+   while ($result eq "") {
+      print "$message\n";
+      chomp($result = <STDIN>);
+   }
+   return $result
+}
+
+#
+# Return a hash map from a specified file
+# Usage: parseToHash("File Location");
+#
+sub parseToHash {
+    my $inFile = shift;
+    my $fh;
+    my %dataHash;
+    my @records;
+
+    open $fh, "<", $inFile
+        or die "Unable to open $inFile for parsing\n";
+    while (my $line = <$fh>) {
+        if ($csv->parse($line)) {
+            my @fields = $csv->fields();
+            $dataHash{$fields[0]} = $fields[1];
+        } else {
+            warn "Unable to parse line $line\n";
+        }
+
+    }
+    close $fh;
+
+    return %dataHash;
+}
+
+#
+# Search a hash map and print any close matches
+# Usage: searchHash("Search String", %hash_to_search)
+#
+sub searchHash {
+    my ($searchTerm, %data) = (@_);
+    my @matches;
+    while (my ($key, $value) = each (%data)) {
+        if ($key =~ /$searchTerm/i) {
+            push @matches, $key;
+        }
+    }
+    return @matches;
+}
+
+#
+# Return a string with the vowels being fuzzy for accented char searching
+# Usage: nixAccents("string to remove accents from");
+#
+sub nixAccents {
+   my $input = shift;
+   $input =~ s/[^a-z]/\*/gi;
+   return $input;
+}
