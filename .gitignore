@@ -2,3 +2,4 @@ output.data
 crimedata.csv
 *.pdf
 .DS_Store
+INPUT/*

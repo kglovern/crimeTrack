@@ -8,42 +8,24 @@ use Text::CSV;
 #
 # Variables
 #
-
-my @records;
-my @locString;
-my @locNum;
-my @locProv;
-
-my $cityName;
-
-my $province;
-my $locAmount = 1;
-
-my $provCount = -1;
-my @locCity;
-my $city;
-my $outputLocation;
-my $counter = 0;
-$locCity[0] = 0;
-my $i = 0;
-
-###
-
 my $SEP = q{,};
 my $file = $ARGV[0];
 my $qType = 0;
 my $sYear = 0;
 my $eYear = 0;
-my $input;
+my $input = "";
 my $outputStr;
 my $location = "";
 my $geoCount = 0;
+my $province;
 my $locFile = "data/locs.data";
 my $csv = Text::CSV->new({ binary=>1 });
 use version;   our $VERSION = qv('5.16.0');
 # Arrays
 my @violations;
 my @locations;
+my @provinces;
+my @records;
 my @results;
 # Hash Tables
 my %locData;
@@ -54,6 +36,8 @@ my %vioData;
 #
 sub getInput;
 sub parseToHash;
+sub loadLocs;
+sub returnProvinceArr;
 sub searchHash;
 sub nixAccents;
 
@@ -61,6 +45,7 @@ sub nixAccents;
 # Load in violation data
 #
 %vioData = parseToHash("data/vios.data");
+%locData = loadLocs("data/locs.data");
 
 #
 # Header - Some sort of welcome message
@@ -83,7 +68,7 @@ while ($qType < 1 || $qType > 4) {
 
 # Get start year
 while (! ($sYear =~ /\d{4}/)) {
-    $sYear = getInput("Please enter the start year.");
+    $sYear = getInput("Please enter the start year:");
     if (! ($sYear =~ /\d{4}/)) {
       print "Not a valid year - expected format: NNNN\n";
     }
@@ -91,7 +76,7 @@ while (! ($sYear =~ /\d{4}/)) {
 
 # Get end year
 while (! ($eYear =~ /\d{4}/)) {
-   $eYear = getInput("Please enter the end year");
+   $eYear = getInput("Please enter the end year:");
    if (! ($eYear =~ /\d{4}/)) {
      print "Not a valid year - expected format: NNNN\n";
    }
@@ -100,104 +85,30 @@ while (! ($eYear =~ /\d{4}/)) {
 #
 #START LOCATION
 #
-#opens location file and saves it to arrays
-open my $locations_fh, '<', $locFile
-or die "Error opening file\n";
-
-@records = <$locations_fh>;
-close $locations_fh;
-
-foreach my $locationRecord (@records) {
-    if ($csv->parse($locationRecord)) { #stores cities and coresponding numbers
-        my @masterFields = $csv->fields();
-
-        $locString[$i]   = $masterFields[0];
-        $locNum[$i]      = $masterFields[1];
-        $i++;
-    } else {     #else statement stores provinces, with their represented number as a negtive
-        if (index(@records, $SEP) == -1) {
-            my @masterFields = $csv->fields();
-            chomp $records[$i];
-            $records[$i] = substr($records[$i], 1, length($records[$i])-2);
-            chop $records[$i];
-            chop $records[$i];
-            $locString[$i]   = $records[$i];
-            $locNum[$i]      = $provCount;
-            $counter = $i -1;
-            while ($locNum[$counter] < 0 && $counter >= 0) {
-                $counter--;
-            }
-            $locCity[$provCount * (-1)-1] = $locNum[$counter];
-            $provCount--;
-            $i++;
-
-        }
-    }
-}
-#first and last cities messed up, this is temporarly hardcoded to fix it
-$locCity[0] = 0;
-$locCity[13] = 32;
-$counter = 1;
-
-#saves the stored provinces and cities into a hash rather than array
-my %hash;
-@hash{@locNum} = @locString;
-
 #prints provinces and takes in answer
-print "Please enter the province number\n";
-print "0. All\n";
-my $k = 1;
-for (my $j = 0; $j < $i; $j++) {
-    if ($locNum[$j] < 0) {
-        print "$k. ";
-        print $locString[$j];
-        print "\n";
-        $k++;
-    }
-}
-chomp($province = <>);
-while ($province < 0 || $province > (13)) {
-    print "Invalid entry. Try again: ";
-    chomp($province = <>);
+print "\n\nProvinces available:\n";
+@provinces = returnProvinceArr(%locData); # Get list of Provinces from array
+
+while (! @locations) {
+   for my $index (0 .. $#provinces) {
+      printf "%d) %s\n", ($index + 1), $provinces[$index];
+   }
+   $input = getInput("Please select a province:");
+   $province = $provinces[$input - 1];
+   print "$province\n";
+   # Give an option to pick a sub city if it exists
+   if (!keys $locData{$province}) {
+      print "No sub locations with $province, defaulting to entire province\n";
+      push @locations, $province;
+   } else {
+      print "Do stuff\n"
+   }
 }
 
-#takes in city based on chosen province
-if ($province != 0) {
-    print "Please enter a city of $hash{-$province}\n";
-    print "0. All\n";
-    for (my $j = $locCity[$province-1]; $j < $locCity[$province]; $j++) {
-        if ($j == 0) {
-            print $counter.". ".$hash{$j};
-            $counter++;
-            print "\n";
-        }
-        print "$j. $hash{$j+1}";
-        print "\n";
-        $counter++;
-    }
-    chomp($city = <>);
-    print $locCity[$province-1]."\n".$locCity[$province]."\n";
-    while (($city < $locCity[$province-1] || $city >= $locCity[$province]) && $city != 0) {
-        print "Invalid entry. Try again: ";
-        chomp($city = <>);
-    }
-}
-
-#formats the answer in order to be sent to output file
-if ($province == 0) {
-    $outputLocation = "\"Canada\"";
-}
-elsif ($city == 0) {
-    $outputLocation = "\"$hash{-$province}\"";
-} else {
-    $outputLocation = "\"$hash{-$province},$hash{$city+1}\"";
-}
-print $outputLocation."\n";
 
 #
 #END LOCATION
 #
-
 
 #
 # Crime Lookup
@@ -232,7 +143,6 @@ while (! @violations ) {
 # Format output string for printing to file
 #
 
-push @locations, "Ontario";
 # Initial information that's consistent across every question
 $outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
 
@@ -299,6 +209,55 @@ sub parseToHash {
     close $fh;
 
     return %dataHash;
+}
+
+#
+# Return a hash map consisting of the imported locations - sorted by province
+# Usage: %myHash = loadLocs("Path/To/Loc/File");
+#
+sub loadLocs {
+   my $inFile = shift;
+   my $fh;
+   my $province = "";
+   my %dataHash;
+   my @records;
+
+   open $fh, "<", $inFile
+      or die "Unable to open location data for parsing\n";
+
+   while (my $line = <$fh>) {
+         if ($csv->parse($line)) {
+            my @fields = $csv->fields();
+            if ($#fields == 0) { # got us a province
+               $province = $fields[0];
+               if (!exists $dataHash{$province}) {
+                  $dataHash{$province} = {};
+               }
+            } else { # got us a city
+                  $dataHash{$province}{$fields[0]} = $fields[1];
+            }
+         } else {
+            warn "Unable to parse line $line\n";
+         }
+   }
+
+   close $fh;
+
+   return %dataHash;
+}
+
+#
+# returnProvinceArr
+#
+#
+sub returnProvinceArr {
+   my %data = @_;
+   my @arr;
+   push @arr,"Canada";
+   foreach my $province (sort keys %data) {
+      push @arr, $province;
+   }
+   return @arr;
 }
 
 #
