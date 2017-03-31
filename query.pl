@@ -68,7 +68,7 @@ foreach my $query ( @queries ) {
         $geoCount = $fields[3];
 
         # Make an output header for the output file later
-        $outputHeader = "$query";
+        $outputHeader = "$query\n";
 
         # Push N geographic locs into array - using the $geoCount offset to know when geos stop
         for (my $i  = $geoStart; $i < ($geoStart + $geoCount); $i++) {
@@ -112,7 +112,11 @@ foreach my $year ( @years ) {
       foreach my $record ( @records ) {
          if ($csv->parse($record)) {
             my @fields = $csv->fields();
-            $data{$year}{$fields[0]}{$fields[1]} = $fields[2];
+            if ($questionType == 1) {
+               $data{$year}{$fields[0]}{$fields[1]} = $fields[2]; #Q1 uses incidents
+            } else {
+               $data{$year}{$fields[0]}{$fields[1]} = $fields[3]; #Q2-4 uses RP1K
+            }
          } else {
             warn "Couldn't parse record line\n";
          }
@@ -130,7 +134,7 @@ open $fh, ">:encoding(utf8)", "output.data"
    or die "Unable to open file for outputting";
 
 print $fh $outputHeader;
-print $fh "\"Year\",\"Geo\",\"Vio\",\"RP1K\"\n";
+print $fh "\"Year\",\"Geo\",\"Vio\",\"Value\"\n";
 foreach my $geo ( @geos ) {
    foreach my $vio ( @vios ) {
       foreach my $year ( @years ) {

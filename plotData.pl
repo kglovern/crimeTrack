@@ -24,7 +24,7 @@ if ($#ARGV != 1 ) {
 } else {
    $infilename = $ARGV[0];
    $pdffilename = $ARGV[1];
-}  
+}
 
 print "input file = $infilename\n";
 print"pdf file = $pdffilename\n";
@@ -53,7 +53,7 @@ print "Title: ".$graphTitle."\n";
 # Create a communication bridge with R and start R
 my $R = Statistics::R->new();
 
-# Name the PDF output file for the plot  
+# Name the PDF output file for the plot
 #my $Rplots_file = "./Rplots_file.pdf";
 
 # Set up the PDF file for plots
@@ -66,7 +66,7 @@ $R->run(q`library(ggplot2)`);
 $R->run(qq`data <- read.csv("$infilename", skip = 1)`);
 
 # plot the data as a line plot with each point outlined
-$R->run(q`ggplot(data, aes(x=Year, y=RP1K, colour=Geo, group=Geo)) + geom_line() + geom_point(size=2) + geom_text(aes(label=RP1K),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=3) + ggtitle($graphTitle) + ylab("Actual Incidents") + labs(fill = "Violation") + ylim(min(data$RP1K), max(data$RP1K)) + xlim(min(data$Year), max(data$Year)) + scale_y_continuous(breaks=seq(min(data$RP1K), max(data$RP1K), 1)) + scale_x_continuous(breaks=seq(min(data$Year), max(data$Year), 1)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
+$R->run(q`ggplot(data, aes(x=Year, y=RP1K, colour=Geo, group=Geo)) + geom_line() + geom_point(size=2) + geom_text(aes(label=Value),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=3) + ggtitle("title") + ylab("Actual Incidents") + labs(fill = "Violation") + ylim(min(data$Value), max(data$RP1K)) + xlim(min(data$Year), max(data$Year)) + scale_y_continuous(breaks=seq(min(data$Value), max(data$Value), 1)) + scale_x_continuous(breaks=seq(min(data$Year), max(data$Year), 1)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
 # close down the PDF device
 $R->run(q`dev.off()`);
 
