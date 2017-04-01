@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-
+use utf8;
 use Text::CSV;
 
 #
@@ -18,6 +18,7 @@ my $outputStr;
 my $location = "";
 my $geoCount = 0;
 my $province;
+my $loc;
 my $locFile = "data/locs.data";
 my $csv = Text::CSV->new({ binary=>1 });
 use version;   our $VERSION = qv('5.16.0');
@@ -98,19 +99,27 @@ while (! @locations) {
    $province = $provinces[$input - 1];
    print "$province\n";
    # Give an option to pick a sub city if it exists
-   if (!keys $locData{$province}) {
+   if (!keys %{$locData{$province}}) {
       print "No sub locations with $province, defaulting to entire province\n";
       push @locations, $province;
    } else {
       print "\nCities within $province:\n";
-
+      binmode(STDOUT, ":utf8");
       my @cities = returnCityArr($province, %locData);
       for my $index (0 .. $#cities) {
          printf "%d) %s\n", $index, $cities[$index];
       }
       $input = getInput("Please select a sub location");
       my $city = $cities[$input];
-      my $loc = "$city, $province";
+      if ($input == 0) {
+         $loc = $province;
+      } else {
+         if ($city =~ /gatineau/i){
+            $loc = "$city, $province part";
+         } else {
+            $loc = "$city, $province";
+         }
+      }
       push @locations, $loc;
 
    }
@@ -274,8 +283,9 @@ sub returnCityArr {
    my ($prov, %data) = (@_);
    my @arr;
    push @arr, "All Locations";
-   while (my ($key, $value) = each %data->{$prov}) {
-      push @arr, $key;
+
+   foreach my $city (sort keys %{$data{$prov}}) {
+      push @arr, $city;
    }
    return @arr;
 }
@@ -287,7 +297,8 @@ sub returnCityArr {
 sub searchHash {
     my ($searchTerm, %data) = (@_);
     my @matches;
-    while (my ($key, $value) = each (%data)) {
+    my @keys = sort keys %data;
+    foreach my $key ( @keys ) {
         if ($key =~ /$searchTerm/i) {
             push @matches, $key;
         }
