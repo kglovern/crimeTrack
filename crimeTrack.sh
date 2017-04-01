@@ -5,6 +5,18 @@
 # Team Sarnia - Quinton Di Paolo, Jackson Firth, Kevin Glover-Netherton, Mitch Haflidson
 #
 
+# Check if the data directory exists.  Run the aggregator if not
+if [ ! -d data ]
+   then
+      mkdir data
+      echo "Data directory does not exist"
+      echo "Enter location of crime data csv for parsing:"
+      read FILELOC
+      [ -f FILELOC ] && perl parseData FILELOC
+fi
+
+[ ! -d data ] && exit -1
+
 # Make PDF Directory to store output if it doesn't exist
 [ ! -d "OUTPUT" ] && mkdir OUTPUT
 # Make Question directory to store past queries
@@ -13,7 +25,7 @@
 #Make an output pdf file name
 NOW=$(date +'%H%M%S')
 OUTFILE="OUTPUT/output-$NOW.pdf"
-INFILE="INPUT/input-$NOW"
+INFILE="INPUT/input-$NOW.que"
 
 # Run the user interface to generate the question query
 perl uInterface.pl $INFILE
