@@ -9,7 +9,7 @@ use Text::CSV;
 # Variables
 #
 my $SEP = q{,};
-my $file = $ARGV[0];
+my $file = "";
 my $qType = 0;
 my $sYear = 0;
 my $eYear = 0;
@@ -43,6 +43,17 @@ sub returnCityArr;
 sub searchHash;
 sub nixAccents;
 
+#
+# Set output file based on command line args
+#
+if ($#ARGV != 0) {
+   print "Usage: uInterface.pl <question output file>\n";
+   exit;
+} else {
+   $file = $ARGV[0];
+}
+
+#
 #
 # Load in violation data
 #

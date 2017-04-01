@@ -36,7 +36,7 @@ if [ -f $INFILE ]
       perl query.pl $INFILE
       # Generate a pdf output
       clear
-      perl plotData.pl output.data $OUTFILE
+      perl plotCrime.pl output.data $OUTFILE
       clear
       echo "Answer PDF located at $OUTFILE"
 fi
