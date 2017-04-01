@@ -1,14 +1,6 @@
 #!/usr/bin/perl
 
 #
-# TODO:
-#  - Determine exactly which sta fields we want from crime stats
-#  - Output missing fields to error file
-#  - Parse population data
-#  - Parse economic data
-#
-
-#
 #   Packages and modules
 #
 use strict;
@@ -26,11 +18,15 @@ my $csv = Text::CSV->new({ binary=> 1, sep_char => $COMMA });
 my $crimeStatsFile;
 my $fh;
 my $outputStr;
+my $cityID = 0;
+my $vioID = 0;
 # Arrays
 my @records;
 my @relevantFields;
 # Hashes
 my %crimeData;
+my %locations;
+my %violations;
 
 #
 # Check for correct # of args - CHANGE THIS AS WE ADD FILES TO PARSE
@@ -60,6 +56,29 @@ foreach my $rec ( @records ) {
    if ( $csv->parse($rec) ) {
       my @fields = $csv->fields();
       $crimeData{$fields[0]}{$fields[1]}{$fields[2]}{$fields[3]} = $fields[6];
+      # Violation parsing
+      $violations{$fields[2]} = 0;
+      # Location parsing
+      my $loc =  $fields[1];
+      if ($loc =~ /^[a-z\s]*$/i) {
+         if (not exists $locations{$loc} and $loc ne "Canada") {
+            $locations{$loc} = {};
+         }
+      } else {
+         my @parts = split (", ", $loc);
+         my $city = $parts[0];
+         my $province = $parts[1];
+         if (not $province =~ / +part$/) { #Gatineau/Ottawa split
+            $locations{$province}{$city} = $cityID;
+         } else {
+            if ($province =~ /^Ontario/) { #shunt them into appropriate province
+               $locations{"Ontario"}{$city} = $cityID;
+            } else {
+               $locations{"Quebec"}{$city} = $cityID;
+            }
+         }
+      }
+
    } else {
       warn "Could not parse: $rec\n";
    }
@@ -103,6 +122,29 @@ while (my ($year, $locs) = each %crimeData) {
    close $fh
 }
 
-print "\n\nTODO: Reformating population data\n";
+#
+# Output the location data
+#
 
-print "\n\nTODO: Reformating economic data\n";
+print "\nOutputting formatted location data\nFile located at $dataLoc"."locs.data";
+
+open $fh, ">:encoding(utf8)", $dataLoc."locs.data";
+while (my ($province, $cities) = each %locations) {
+   if (not $province =~ /^Ontario\/Quebec$/) {
+      print $fh "\"$province\"\n";
+      while (my ($city, $id) = each %$cities) {
+         print $fh "\"$city\",$cityID\n";
+         $cityID ++;
+      }
+   }
+}
+close $fh;
+
+print "\nOutputting formatted violation data\n";
+
+open $fh, ">:encoding(utf8)", $dataLoc."vios.data";
+while (my ($violation, $id) = each %violations) {
+    print $fh "\"$violation\",$vioID\n";
+    $vioID ++;
+}
+close $fh;
