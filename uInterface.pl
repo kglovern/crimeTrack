@@ -31,8 +31,7 @@ my @results;
 # Hash Tables
 my %locData;
 my %vioData;
-
-my $nextInput = "Yes";
+my $nextInput = -1;
 
 #
 # Subroutine Prototypes
@@ -81,6 +80,7 @@ while ($qType < 1 || $qType > 4) {
       print "Not a valid question type\n";
    }
 }
+$qType = int($qType);
 
 #
 # We have some minimum violation/location values to check for based on question type
@@ -106,12 +106,6 @@ while (! ($eYear =~ /\d{4}/x)) {
 #START LOCATION
 #
 #checks to see if asking for location is necessary
-if ($qType == 4) {
-    $nextInput = "No";
-    $geoCount = 1;
-    $loc = "Canada";
-    @locations = "Canada";
-}
 #prints provinces and takes in answer
 while ($#locations < ($locMin - 1) || $nextInput == 1) {
    print "\n\nSelect a location for this query.\n";
@@ -158,6 +152,11 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
 if ($qType == 3) {
    push @locations, "Canada";
 }
+if ($qType == 4) {
+   for my $index (1.. $#provinces) {
+      push @locations, $provinces[$index];
+   }
+}
 
 #
 #END LOCATION
@@ -181,7 +180,7 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
       }
 
       $input = getInput("Select the number corresponding to the violation:");
-      if ($input >= 0 && $input <= ($#results + 1)) {
+      if ($input > 0 && $input <= ($#results + 1)) {
          push @violations, $results[$input - 1];
       } else {
          print "Invalid index\n";
