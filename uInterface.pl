@@ -155,6 +155,10 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
    }
 }
 
+if ($qType == 3) {
+   push @locations, "Canada";
+}
+
 #
 #END LOCATION
 #
