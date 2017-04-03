@@ -5,12 +5,14 @@ use warnings;
 use utf8;
 use Text::CSV;
 use Scalar::Util qw(looks_like_number);
+use List::Util qw( min max );
 use version;   our $VERSION = qv('5.16.0');
 
 #
 # Variables
 #
 my $SEP = q{,};
+my $dataLoc = "./data";
 my $file = "";
 my $qType = "";
 my $sYear = 0;
@@ -45,7 +47,6 @@ sub returnCityArr;
 sub searchHash;
 sub minWarning;
 sub promptContinue;
-sub nixAccents;
 sub getNumeric;
 
 #
@@ -79,75 +80,94 @@ print "4) In what province is crime A highest/ lowest?\n";
 
 $qType = getNumeric("Select a question type", 1, 4);
 
-$qType = int($qType);
+$qType = int($qType); # no sneaky fractions
 
 #
 # We have some minimum violation/location values to check for based on question type
 #
+if ($qType == 4) {
+}
+#
+# Get the data range for data start and end years
+#
+my ($dataStart, $dataEnd) = getYearRange();
 
 # Get start year
-while (! ($sYear =~ /\d{4}/x)) {
-    $sYear = getInput("Please enter the start year:");
-    if (! ($sYear =~ /\d{4}/x)) {
+while (! ($sYear =~ /^\d{4}$/x)) {
+    $sYear = getInput("Please enter the start year (data available from $dataStart):");
+    if (! ($sYear =~ /^\d{4}$/x)) {
       print "Not a valid year - expected format: NNNN\n";
     }
 }
+if ($sYear < $dataStart) {
+   warn "Start year entered is earlier than data available for.  Defaulting to first available year ($dataStart)\n";
+   $sYear = $dataStart;
+}
 
 # Get end year
-while (! ($eYear =~ /\d{4}/x)) {
-   $eYear = getInput("Please enter the end year (start year was $sYear):");
-   if (! ($eYear =~ /\d{4}/x)) {
+while (! ($eYear =~ /^\d{4}$/x)) {
+   $eYear = getInput("Please enter the end year (start year was $sYear, data availabe until $dataEnd):");
+   if (! ($eYear =~ /^\d{4}$/x)) {
      print "Not a valid year - expected format: NNNN\n";
    }
 }
+if ($eYear > $dataEnd) {
+   warn "End year entered is later than data available for.  Defaulting to last available year ($dataEnd)\n";
+   $eYear = $dataEnd;
+}
+
 
 #
 #START LOCATION
 #
 #checks to see if asking for location is necessary
 #prints provinces and takes in answer
-while ($#locations < ($locMin - 1) || $nextInput == 1) {
-   print "\n\nSelect a location for this query.\n";
-   minWarning ("This question type requires at least $locMin location(s)", @locations);
-   print "Locations available:\n";
-   @provinces = returnProvinceArr(%locData); # Get list of Provinces from array
-   for my $index (0 .. $#provinces) {
-      printf "%d) %s\n", ($index + 1), $provinces[$index];
-   }
+@provinces = returnProvinceArr(%locData); # Get list of Provinces from array
 
-   $input = getNumeric("Please select a province", 0, ($#provinces + 1));
-   $province = $provinces[$input - 1];
+if ($qType != 4) {
+   while ($#locations < ($locMin - 1) || $nextInput == 1) {
+      print "\n\nSelect a location for this query.\n";
+      minWarning ("This question type requires at least $locMin location(s)", @locations);
+      print "Locations available:\n";
 
-   print "$province\n";
-   # Give an option to pick a sub city if it exists
-   if (!keys %{$locData{$province}}) {
-      print "No sub locations in $province, defaulting to 'All'\n";
-      push @locations, $province;
-   } else {
-      print "\nCities within $province:\n";
-      binmode(STDOUT, ":encoding(utf8)");
-      my @cities = returnCityArr($province, %locData);
-      for my $index (0 .. $#cities) {
-         printf "%d) %s\n", $index, $cities[int($index)];
+      for my $index (0 .. $#provinces) {
+         printf "%d) %s\n", ($index + 1), $provinces[$index];
       }
-      $input = getNumeric("Enter a sub location", 0, ($#cities + 1));
-      my $city = $cities[int($input)];
-      if ($input == 0) {
-         $loc = $province;
+
+      $input = getNumeric("Please select a province", 0, ($#provinces + 1));
+      $province = $provinces[$input - 1];
+
+      print "$province\n";
+      # Give an option to pick a sub city if it exists
+      if (!keys %{$locData{$province}}) {
+         print "No sub locations in $province, defaulting to 'All'\n";
+         push @locations, $province;
       } else {
-         if ($city =~ /gatineau/i) { #Damnit Gatineau
-            $loc = "$city, $province part";
-         } else {
-            print "$city\n";
-            $loc = "$city, $province";
+         print "\nCities within $province:\n";
+         binmode(STDOUT, ":encoding(utf8)");
+         my @cities = returnCityArr($province, %locData);
+         for my $index (0 .. $#cities) {
+            printf "%d) %s\n", $index, $cities[int($index)];
          }
+         $input = getNumeric("Enter a sub location", 0, ($#cities + 1));
+         my $city = $cities[int($input)];
+         if ($input == 0) {
+            $loc = $province;
+         } else {
+            if ($city =~ /gatineau/i) { #Damnit Gatineau
+               $loc = "$city, $province part";
+            } else {
+               print "$city\n";
+               $loc = "$city, $province";
+            }
+         }
+      push @locations, $loc;
       }
-   push @locations, $loc;
-   }
-   if ($qType == 1) {
-      $nextInput = promptContinue("location");
-   } else {
-      $nextInput = 0;
+      if ($qType == 1) {
+         $nextInput = promptContinue("location");
+      } else {
+         $nextInput = 0;
+      }
    }
 }
 
@@ -206,14 +226,17 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
 $outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
 
 # Now add location count and locations
-$geoCount = ($#locations + 1);
+my @uniqueLoc = do { my %seen; grep { !$seen{$_}++ } @locations }; # credit to Perl maven for this snippet
+$geoCount = ($#uniqueLoc + 1);
 $outputStr = $outputStr.$geoCount;
-foreach my $loc ( @locations ) {
+
+foreach my $loc ( @uniqueLoc ) {
    $outputStr = $outputStr.$SEP."\"".$loc."\"";
 }
 
 # Now add all the violations we're looking at
-foreach my $violation ( @violations ) {
+my @uniqueVio = do { my %seen; grep { !$seen{$_}++ } @violations }; # Credit to perl maven for this snippet
+foreach my $violation ( @uniqueVio ) {
    $outputStr = $outputStr.$SEP."\"".$violation."\"";
 }
 
@@ -373,17 +396,17 @@ sub promptContinue {
    my $affirm = "";
    while (1) {
       $affirm = getInput("Did you want to add another $message (Yes/No)?");
-      if ($affirm =~ /y(es)?$/i) {
+      if ($affirm =~ /^y(es)?$/i) {
          return 1;
-      } elsif ($affirm =~ /no?$/i) {
+      } elsif ($affirm =~ /^no?$/i) {
          return 0;
       }
    }
 }
 
 #
-#
-# Usage:
+# Forces the user to enter a numeric input within a particular range
+# Usage: getNumeric("Message to display", minRangeInt, maxRangeInt);
 #
 sub getNumeric {
    my $message = shift;
@@ -404,12 +427,27 @@ sub getNumeric {
    }
    return $number;
 }
+
 #
-# Return a string with the vowels being fuzzy for accented char searching
-# Usage: nixAccents("string to remove accents from");
+# Return two integers corresponding to the earliest and latest year data we have
+# usage: getYearRange();
 #
-sub nixAccents {
-   my $string = shift;
-   $string =~ s/[^a-z]/\*/gi;
-   return $string;
+sub getYearRange {
+   my @dataYears;
+   my $min;
+   my $max;
+
+   opendir my $dir, $dataLoc
+      or die "Unable to open directory for reading\n";
+   my @files = readdir($dir);
+   foreach my $file ( @files ) {
+      if ($file =~ /^[0-9]{4}Crime.csv/i) {
+         $file =~ s/[^0-9]//g;
+         push @dataYears, $file
+      }
+   }
+   $min = min (@dataYears);
+   $max = max (@dataYears);
+
+   return ($min, $max);
 }
