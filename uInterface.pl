@@ -128,16 +128,17 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
       binmode(STDOUT, ":encoding(utf8)");
       my @cities = returnCityArr($province, %locData);
       for my $index (0 .. $#cities) {
-         printf "%d) %s\n", $index, $cities[$index];
+         printf "%d) %s\n", $index, $cities[int($index)];
       }
       $input = getNumeric("Enter a sub location", 0, ($#cities + 1));
-      my $city = $cities[$input];
+      my $city = $cities[int($input)];
       if ($input == 0) {
          $loc = $province;
       } else {
          if ($city =~ /gatineau/i) { #Damnit Gatineau
             $loc = "$city, $province part";
          } else {
+            print "$city\n";
             $loc = "$city, $province";
          }
       }
