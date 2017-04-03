@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 use Text::CSV;
+use Scalar::Util qw(looks_like_number);
 use version;   our $VERSION = qv('5.16.0');
 
 #
@@ -11,7 +12,7 @@ use version;   our $VERSION = qv('5.16.0');
 #
 my $SEP = q{,};
 my $file = "";
-my $qType = 0;
+my $qType = "";
 my $sYear = 0;
 my $eYear = 0;
 my $input = "";
@@ -45,6 +46,7 @@ sub searchHash;
 sub minWarning;
 sub promptContinue;
 sub nixAccents;
+sub getNumeric;
 
 #
 # Set output file based on command line args
@@ -74,12 +76,9 @@ print "1) Is crime A increasing, decreasing, or staying the same?\n";
 print "2) How does crime A rates compare to crime B rates in a certain geography?\n";
 print "3) Is crime A higher/ lower/ the same in area B compared to Canadian average?\n";
 print "4) In what province is crime A highest/ lowest?\n";
-while ($qType < 1 || $qType > 4) {
-   $qType = getInput("Please choose a question type:");
-   if ($qType < 1 && $qType > 4) {
-      print "Not a valid question type\n";
-   }
-}
+
+$qType = getNumeric("Select a question type", 1, 4);
+
 $qType = int($qType);
 
 #
@@ -115,8 +114,10 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
    for my $index (0 .. $#provinces) {
       printf "%d) %s\n", ($index + 1), $provinces[$index];
    }
-   $input = getInput("Please select a province:");
+
+   $input = getNumeric("Please select a province", 0, ($#provinces + 1));
    $province = $provinces[$input - 1];
+
    print "$province\n";
    # Give an option to pick a sub city if it exists
    if (!keys %{$locData{$province}}) {
@@ -371,14 +372,36 @@ sub promptContinue {
    my $affirm = "";
    while (1) {
       $affirm = getInput("Did you want to add another $message (Yes/No)?");
-      if ($affirm =~ /y(es)?/i) {
+      if ($affirm =~ /y(es)?$/i) {
          return 1;
-      } elsif ($affirm =~ /no?/i) {
+      } elsif ($affirm =~ /no?$/i) {
          return 0;
       }
    }
 }
 
+#
+#
+#
+sub getNumeric {
+   my $message = shift;
+   my $start = shift;
+   my $end = shift;
+   my $number;
+   while (1) {
+      $number = getInput($message);
+      if (looks_like_number $number) {
+         if ($number >= $start && $number <= $end) {
+            return $number
+         } else {
+            print "Selected index out of bounds\n";
+         }
+      } else {
+         print "Please enter a number between $start and $end\n";
+      }
+   }
+   return $number;
+}
 #
 # Return a string with the vowels being fuzzy for accented char searching
 # Usage: nixAccents("string to remove accents from");
