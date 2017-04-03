@@ -164,7 +164,7 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
 #
 print "\n";
 while ($#violations < ($vioMin - 1) || $nextInput == 1) {
-   print "Select a violation to include in this query:";
+   print "Select a violation to include in this query\n";
    minWarning("This question type requires at least $vioMin violation(s)", @violations);
    $input = getInput("Please enter a keyword to search for a violation:");
    @results = searchHash($input, %vioData);
