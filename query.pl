@@ -65,7 +65,10 @@ foreach my $query ( @queries ) {
         $questionType = $fields[0];
         $startYear = $fields[1];
         $endYear = $fields[2];
+        # If startYear is gt endYear, set end year to start year
+        $endYear = ($startYear > $endYear) ? $startYear : $endYear;
         $geoCount = $fields[3];
+
 
         # Make an output header for the output file later
         $outputHeader = "$query\n";

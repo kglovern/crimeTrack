@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use utf8;
 use Text::CSV;
+use version;   our $VERSION = qv('5.16.0');
 
 #
 # Variables
@@ -19,14 +20,13 @@ my $location = "";
 my $geoCount = 0;
 my $province;
 my $loc;
-my $locFile = "data/locs.data";
 my $csv = Text::CSV->new({ binary=>1 });
-use version;   our $VERSION = qv('5.16.0');
+my $vioMin = 1;
+my $locMin = 1;
 # Arrays
 my @violations;
 my @locations;
 my @provinces;
-my @records;
 my @results;
 # Hash Tables
 my %locData;
@@ -43,6 +43,7 @@ sub loadLocs;
 sub returnProvinceArr;
 sub returnCityArr;
 sub searchHash;
+sub minWarning;
 sub nixAccents;
 
 #
@@ -80,19 +81,23 @@ while ($qType < 1 || $qType > 4) {
    }
 }
 
+#
+# We have some minimum violation/location values to check for based on question type
+#
+
 
 # Get start year
-while (! ($sYear =~ /\d{4}/)) {
+while (! ($sYear =~ /\d{4}/x)) {
     $sYear = getInput("Please enter the start year:");
-    if (! ($sYear =~ /\d{4}/)) {
+    if (! ($sYear =~ /\d{4}/x)) {
       print "Not a valid year - expected format: NNNN\n";
     }
 }
 
 # Get end year
-while (! ($eYear =~ /\d{4}/)) {
-   $eYear = getInput("Please enter the end year:");
-   if (! ($eYear =~ /\d{4}/)) {
+while (! ($eYear =~ /\d{4}/x)) {
+   $eYear = getInput("Please enter the end year (start year was $sYear):");
+   if (! ($eYear =~ /\d{4}/x)) {
      print "Not a valid year - expected format: NNNN\n";
    }
 }
@@ -120,11 +125,11 @@ while ($nextInput ne "No") {
    print "$province\n";
    # Give an option to pick a sub city if it exists
    if (!keys %{$locData{$province}}) {
-      print "No sub locations with $province, defaulting to entire province\n";
+      print "No sub locations in $province, defaulting to 'All'\n";
       push @locations, $province;
    } else {
       print "\nCities within $province:\n";
-      binmode(STDOUT, ":utf8");
+      binmode(STDOUT, ":encoding(utf8)");
       my @cities = returnCityArr($province, %locData);
       for my $index (0 .. $#cities) {
          printf "%d) %s\n", $index, $cities[$index];
@@ -134,7 +139,7 @@ while ($nextInput ne "No") {
       if ($input == 0) {
          $loc = $province;
       } else {
-         if ($city =~ /gatineau/i){
+         if ($city =~ /gatineau/i) { #Damnit Gatineau
             $loc = "$city, $province part";
          } else {
             $loc = "$city, $province";
@@ -159,11 +164,12 @@ while ($nextInput ne "No") {
 #
 # Crime Lookup
 #
+print "\n";
+while (! @violations || $#violations < ($vioMin - 1)) {
+   minWarning("This question type requires $vioMin violations", @violations);
+   $input = getInput("Please enter a keyword to search for a violation:");
+   @results = searchHash($input, %vioData);
 
-$input = getInput("Please enter a keyword to search for a related violation");
-
-@results = searchHash($input, %vioData);
-while (! @violations ) {
    if ($#results >= 0) {
 
       print "\nTerms matching $input:\n";
@@ -171,7 +177,7 @@ while (! @violations ) {
          printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
-      $input = getInput("Select the number corresponding to the violation");
+      $input = getInput("Select the number corresponding to the violation:");
       if ($input >= 0 && $input <= ($#results + 1)) {
          push @violations, $results[$input - 1];
       } else {
@@ -298,8 +304,8 @@ sub returnProvinceArr {
    my %data = @_;
    my @arr;
    push @arr,"Canada";
-   foreach my $province (sort keys %data) {
-      push @arr, $province;
+   foreach my $prov (sort keys %data) {
+      push @arr, $prov;
    }
    return @arr;
 }
@@ -313,6 +319,25 @@ sub returnCityArr {
       push @arr, $city;
    }
    return @arr;
+}
+
+#
+# Prints a warning about how many elements must be selected
+# Usage: minWarning("message to be printed", @arr_to_count_fron
+#
+sub minWarning {
+   my ($message, @data) = (@_);
+   my $count = (@data) ? ($#data + 1) : 0;
+   print "$message\n";
+   print "You currently have $count";
+   if ($count > 0) {
+      print ": ";
+      foreach my $element ( @data ) {
+         print "$element ";
+      }
+      print "\n";
+   }
+   print "\n";
 }
 
 #
