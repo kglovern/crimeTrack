@@ -86,7 +86,6 @@ while ($qType < 1 || $qType > 4) {
 # We have some minimum violation/location values to check for based on question type
 #
 
-
 # Get start year
 while (! ($sYear =~ /\d{4}/x)) {
     $sYear = getInput("Please enter the start year:");
@@ -367,7 +366,7 @@ sub searchHash {
 sub promptContinue {
    my $message = shift;
    my $affirm = "";
-   while ($affirm eq "") {
+   while (1) {
       $affirm = getInput("Did you want to add another $message (Yes/No)?");
       if ($affirm =~ /y(es)?/i) {
          return 1;
