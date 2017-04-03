@@ -32,6 +32,8 @@ my @results;
 my %locData;
 my %vioData;
 
+my $nextInput = "Yes";
+
 #
 # Subroutine Prototypes
 #
@@ -98,11 +100,18 @@ while (! ($eYear =~ /\d{4}/)) {
 #
 #START LOCATION
 #
+#checks to see if asking for location is necessary
+if ($qType == 4) {
+    $nextInput = "No";
+    $geoCount = 1;
+    $loc = "Canada";
+    @locations = "Canada";
+}
 #prints provinces and takes in answer
-print "\n\nProvinces available:\n";
-@provinces = returnProvinceArr(%locData); # Get list of Provinces from array
-
-while (! @locations) {
+while ($nextInput ne "No") {
+   print "\n\nProvinces available:\n";
+   @provinces = returnProvinceArr(%locData); # Get list of Provinces from array
+   $geoCount++;
    for my $index (0 .. $#provinces) {
       printf "%d) %s\n", ($index + 1), $provinces[$index];
    }
@@ -131,11 +140,17 @@ while (! @locations) {
             $loc = "$city, $province";
          }
       }
-      push @locations, $loc;
-
+   push @locations, $loc;
+   }
+   if ($qType == 1) {
+      $nextInput = getInput ("Would you like to add another location? (Yes/No)");
+      while ($nextInput ne "Yes" && $nextInput ne "No") {
+         $nextInput =getInput ("Invalid entry, must be Yes or No");
+      }
+   } else {
+      $nextInput = "No";
    }
 }
-
 
 #
 #END LOCATION
@@ -178,7 +193,6 @@ while (! @violations ) {
 $outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
 
 # Now add location count and locations
-$geoCount = $#locations + 1;
 $outputStr = $outputStr.$geoCount;
 foreach my $loc ( @locations ) {
    $outputStr = $outputStr.$SEP."\"".$loc."\"";
