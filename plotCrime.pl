@@ -118,7 +118,7 @@ if ($fields[0] == 1) {
     #$Geos =~ tr/,//d;
     $graphTitle = $Geos." Incident Rate ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, colour=Vio, group=Vio)) + geom_line() +
-    geom_point(size=1.5) +
+    geom_point(size=1) +
     ggtitle("$graphTitle") + ylab("Rate per 100,000 population") +
     ylim(min(data\$Value), max(data\$Value)) + xlim(min(data\$Year), max(data\$Year)) +
     scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
