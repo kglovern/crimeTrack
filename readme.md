@@ -3,6 +3,8 @@ The following is our Crime Statistics answer generator for CIS*2250 Winter 2017.
 
 It looks at crime statistics and other census data from Stats Canada/Canada census and attempts to answer questions posed to it by the user.
 
+Answers to the query will be outputted in a PDF graph format
+
 # Team Members
 - Quinton Di Paolo
 - Jackson Firth
@@ -10,7 +12,10 @@ It looks at crime statistics and other census data from Stats Canada/Canada cens
 - Mitchell Haflidson
 
 # Instructions
- - TBD
+ - If the data directory does not exist, run the parseData script using the crime data file location as a command line argument
+ - Run the program using the crimeTrack.sh script and follow the one screen prompts
+ - Output PDF location should be indicated to the user at the completion of the script
 
 # Known Issues/workarounds
-- TBD
+- User must have read/write permissions for the working directory
+- Inputting a start year that is less than the end year will intentionally result in a data range consisting only of the start year
