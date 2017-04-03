@@ -44,6 +44,7 @@ sub returnProvinceArr;
 sub returnCityArr;
 sub searchHash;
 sub minWarning;
+sub promptContinue;
 sub nixAccents;
 
 #
@@ -113,10 +114,11 @@ if ($qType == 4) {
     @locations = "Canada";
 }
 #prints provinces and takes in answer
-while ($nextInput ne "No") {
-   print "\n\nProvinces available:\n";
+while ($#locations < ($locMin - 1) || $nextInput == 1) {
+   print "\n\nSelect a location for this query.\n";
+   minWarning ("This question type requires at least $locMin location(s)", @locations);
+   print "Locations available:\n";
    @provinces = returnProvinceArr(%locData); # Get list of Provinces from array
-   $geoCount++;
    for my $index (0 .. $#provinces) {
       printf "%d) %s\n", ($index + 1), $provinces[$index];
    }
@@ -148,12 +150,9 @@ while ($nextInput ne "No") {
    push @locations, $loc;
    }
    if ($qType == 1) {
-      $nextInput = getInput ("Would you like to add another location? (Yes/No)");
-      while ($nextInput ne "Yes" && $nextInput ne "No") {
-         $nextInput =getInput ("Invalid entry, must be Yes or No");
-      }
+      $nextInput = promptContinue("location");
    } else {
-      $nextInput = "No";
+      $nextInput = 0;
    }
 }
 
@@ -165,8 +164,9 @@ while ($nextInput ne "No") {
 # Crime Lookup
 #
 print "\n";
-while (! @violations || $#violations < ($vioMin - 1)) {
-   minWarning("This question type requires $vioMin violations", @violations);
+while ($#violations < ($vioMin - 1) || $nextInput == 1) {
+   print "Select a violation to include in this query:";
+   minWarning("This question type requires at least $vioMin violation(s)", @violations);
    $input = getInput("Please enter a keyword to search for a violation:");
    @results = searchHash($input, %vioData);
 
@@ -186,6 +186,9 @@ while (! @violations || $#violations < ($vioMin - 1)) {
    } else {
        print "No results found\n";
    }
+   if ($#violations >= $vioMin - 1) {
+      $nextInput = promptContinue("violation");
+   }
 }
 #
 # End Crime Lookup
@@ -199,6 +202,7 @@ while (! @violations || $#violations < ($vioMin - 1)) {
 $outputStr = $qType.$SEP.$sYear.$SEP.$eYear.$SEP;
 
 # Now add location count and locations
+$geoCount = ($#locations + 1);
 $outputStr = $outputStr.$geoCount;
 foreach my $loc ( @locations ) {
    $outputStr = $outputStr.$SEP."\"".$loc."\"";
@@ -354,6 +358,23 @@ sub searchHash {
         }
     }
     return @matches;
+}
+
+#
+# Get a Yes/No Answer from the user
+# usage: promptContinue("location")
+#
+sub promptContinue {
+   my $message = shift;
+   my $affirm = "";
+   while ($affirm eq "") {
+      $affirm = getInput("Did you want to add another $message (Yes/No)?");
+      if ($affirm =~ /y(es)?/i) {
+         return 1;
+      } elsif ($affirm =~ /no?/i) {
+         return 0;
+      }
+   }
 }
 
 #
