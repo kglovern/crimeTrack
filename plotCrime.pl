@@ -75,7 +75,6 @@ print"pdf file = $pdffilename\n";
 #
 open my $fh, "<", $infilename;
 $question = <$fh>;
-#print "Question: ".$question;
 if ( $csv->parse($question) ) {
     @fields = $csv->fields();
 } else {
@@ -89,10 +88,6 @@ for my $i (4..(3 + $fields[3])) {
 for my $j ((4 + $fields[3])..$#fields) {
     $Vios = $Vios.$fields[$j].$COMMA;
 }
-print "Geos: ".$Geos."\n";
-print "Vios: ".$Vios."\n";
-#$graphTitle = $Vios." in ".$Geos.$COMMA.$fields[1]." - ".$fields[2];
-#print "Title: ".$graphTitle."\n";
 
 # Create a communication bridge with R and start R
 my $R = Statistics::R->new();
@@ -106,23 +101,22 @@ $R->run(qq`pdf("$pdffilename" , paper="letter")`);
 # Load the plotting libraries
 $R->run(q`library(ggplot2)`);
 $R->run(q`library(plyr)`);
-$R->run(q`library(grid)`);
-$R->run(q`library(lattice)`);
+#$R->run(q`library(grid)`);
+#$R->run(q`library(lattice)`);
 
 # read in data from a CSV file
 $R->run(qq`data <- read.csv("$infilename", skip = 1)`);
 
 if ($fields[0] == 1) {
-    $graphTitle = $Vios.$fields[1]." - ".$fields[2];
+    $graphTitle = "Actual Incidents, ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, group=Vio, colour=Vio)) + geom_line() +
     geom_point(size=1) + facet_grid(Geo~.) +
     ggtitle("$graphTitle") + ylab("Actual Incidents") + labs(fill = "Violation") +
     scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
-    scale_y_continuous(breaks=seq(min(data\$Value), max(data\$Value), 1)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))`);
 } elsif ($fields[0] == 2) {
-    #$Geos =~ tr/,/" vs "/;
-    $graphTitle = $Vios.$Geos."\n";
+    #$Geos =~ tr/,//d;
+    $graphTitle = $Geos." Incident Rate ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, colour=Vio, group=Vio)) + geom_line() +
     geom_point(size=1.5) +
     geom_text(aes(label=Value),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=2.3) +
@@ -132,41 +126,21 @@ if ($fields[0] == 1) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
 } elsif ($fields[0] == 3) {
     $Vios =~ tr/,//d;
-    $graphTitle = $Vios." vs National Average ".$fields[1]." - ".$fields[2];
+    $graphTitle = "Incident Rate vs National Average\n".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, colour=Geo, group=Geo)) + geom_line() +
-    geom_point(size=1) +
-    ggtitle("$graphTitle") + ylab("Actual Incidents") + labs(fill = "Violation") +
+    geom_point(size=1) + ggtitle("$graphTitle") + ylab("Rate per 100,000 population") +
     ylim(min(data\$Value), max(data\$Value)) + xlim(min(data\$Year), max(data\$Year)) +
     scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))`);
 } elsif ($fields[0] == 4) {
-    $graphTitle = $Vios.$fields[1]." - ".$fields[2];
+    $graphTitle = "Incident Rate for the Nation ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, group=Vio, colour=Vio)) + geom_line() +
-              geom_point(size=1) + facet_grid(Geo~.) +
+              geom_point(size=1) + facet_grid(Geo~.) + ylab("Rate per 100,000 population") +
               scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
               ggtitle("$graphTitle")`);
 }
-#geom_text(aes(label=RP1K),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=2.3)
 
-# For questions with two violations (bar graph)
-#$R->run(qq`ggplot(data, aes(x=Year, y=RP1K, group=interaction(Vio,Geo), colour=Vio, fill=Geo)) +
-#          scale_fill_manual(values=c("yellow", "pink")) +
-#          theme_minimal() + ggtitle("$graphTitle") +
-#          scale_colour_manual(values=c("blue", "black")) +
-#          geom_bar(width=0.9, stat="identity", position=position_dodge(width=0.75)) +
-#          scale_y_continuous(breaks=seq(min(data\$RP1K), max(data\$RP1K), 1)) +
-#          scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
-#          theme(axis.text.x = element_text(angle = 45, hjust = 1))`);
-
-# plot the data as a line plot with each point outlined
-#$R->run(qq`ggplot(data, aes(x=Year, y=RP1K, colour=Geo, group=Geo)) + geom_line() + geom_point(size=1.5) +
-#          geom_text(aes(label=RP1K),hjust=0, nudge_x=0.25, vjust=0, nudge_y=0.25, angle = 45, size=3) +
-#          ggtitle("$graphTitle") + ylab("Actual Incidents") + labs(fill = "Violation") +
-#          ylim(min(data\$RP1K), max(data\$RP1K)) + xlim(min(data\$Year), max(data\$Year)) +
-#          scale_y_continuous(breaks=seq(min(data\$RP1K), max(data\$RP1K), 1)) +
-#          scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
-#          theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
 # close down the PDF device
 $R->run(q`dev.off()`);
 
