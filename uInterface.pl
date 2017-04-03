@@ -130,7 +130,7 @@ while ($#locations < ($locMin - 1) || $nextInput == 1) {
       for my $index (0 .. $#cities) {
          printf "%d) %s\n", $index, $cities[$index];
       }
-      $input = getInput("Please select a sub location");
+      $input = getNumeric("Enter a sub location", 0, ($#cities + 1));
       my $city = $cities[$input];
       if ($input == 0) {
          $loc = $province;
@@ -382,6 +382,7 @@ sub promptContinue {
 
 #
 #
+# Usage:
 #
 sub getNumeric {
    my $message = shift;
