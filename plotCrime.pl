@@ -125,12 +125,12 @@ if ($fields[0] == 1) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) + stat_smooth(method = "lm", se = FALSE)`);
 } elsif ($fields[0] == 3) {
     $Vios =~ tr/,//d;
-    $graphTitle = $Vios."\nIncident Rate vs National Average\n".$fields[1]."\n - ".$fields[2];
+    $graphTitle = "Incident Rate vs National Average\n".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, colour=Geo, group=Geo)) + geom_line() +
     geom_point(size=1) + ggtitle("$graphTitle") + ylab("Rate per 100,000 population") +
     ylim(min(data\$Value), max(data\$Value)) + xlim(min(data\$Year), max(data\$Year)) +
     scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + facet_wrap(~vio, ncol = 3)`);
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + facet_wrap(~Vio, ncol = 2)`);
 } elsif ($fields[0] == 4) {
     $graphTitle = "Incident Rate for the Nation ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, group=Vio, colour=Vio)) + geom_line() +

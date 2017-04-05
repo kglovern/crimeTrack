@@ -1,46 +1,46 @@
-"Prince Edward Island"
-"Nunavut"
-"Quebec"
-"Trois-Rivières",0
-"Québec",1
-"Montréal",2
-"Ottawa-Gatineau",3
-"Saguenay",4
-"Sherbrooke",5
-"Newfoundland and Labrador"
-"St. John's",6
-"Saskatchewan"
-"Saskatoon",7
-"Regina",8
-"Yukon"
-"New Brunswick"
-"Saint John",9
-"Moncton",10
-"British Columbia"
-"Abbotsford-Mission",11
-"Vancouver",12
-"Kelowna",13
-"Victoria",14
-"Nova Scotia"
-"Halifax",15
-"Manitoba"
-"Winnipeg",16
 "Northwest Territories"
+"British Columbia"
+"Victoria",0
+"Kelowna",1
+"Vancouver",2
+"Abbotsford-Mission",3
+"New Brunswick"
+"Saint John",4
+"Moncton",5
+"Saskatchewan"
+"Regina",6
+"Saskatoon",7
+"Quebec"
+"Québec",8
+"Ottawa-Gatineau",9
+"Trois-Rivières",10
+"Montréal",11
+"Saguenay",12
+"Sherbrooke",13
+"Prince Edward Island"
+"Yukon"
+"Newfoundland and Labrador"
+"St. John's",14
+"Nunavut"
 "Alberta"
-"Edmonton",17
-"Calgary",18
+"Edmonton",15
+"Calgary",16
+"Nova Scotia"
+"Halifax",17
+"Manitoba"
+"Winnipeg",18
 "Ontario"
-"Kitchener-Cambridge-Waterloo",19
-"Ottawa-Gatineau",20
-"Toronto",21
-"Brantford",22
-"St.Catharines-Niagara",23
-"Windsor",24
-"Hamilton",25
-"Thunder Bay",26
-"Barrie",27
-"Peterborough",28
-"Sudbury",29
-"London",30
-"Kingston",31
-"Guelph",32
+"Toronto",19
+"Thunder Bay",20
+"Windsor",21
+"Barrie",22
+"London",23
+"Hamilton",24
+"Guelph",25
+"Sudbury",26
+"St.Catharines-Niagara",27
+"Kingston",28
+"Brantford",29
+"Peterborough",30
+"Ottawa-Gatineau",31
+"Kitchener-Cambridge-Waterloo",32
