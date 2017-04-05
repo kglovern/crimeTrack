@@ -202,7 +202,6 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
       print "\nTerms matching $input:\n";
       print "0) Search for a different violation\n";
       for my $index ( 0 .. $#results ) {
-        print "0) Go back\n";
          printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
