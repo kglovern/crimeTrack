@@ -1,4 +1,4 @@
-#/usr/bin/bash
+#!/bin/bash
 
 #
 # crimeTrack data parser - wrapper script
@@ -12,7 +12,7 @@ if [ ! -d data ]
       echo "Data directory does not exist"
       echo "Enter location of crime data csv for parsing:"
       read FILELOC
-      [ -f FILELOC ] && perl parseData FILELOC
+      [ -f $FILELOC ] && perl parseData.pl $FILELOC
 fi
 
 [ ! -d data ] && exit -1

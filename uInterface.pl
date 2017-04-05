@@ -197,12 +197,15 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
    if ($#results >= 0) {
 
       print "\nTerms matching $input:\n";
+      print "0) Search for a different violation\n";
       for my $index ( 0 .. $#results ) {
          printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
       $input = getInput("Select the number corresponding to the violation:");
-      if ($input > 0 && $input <= ($#results + 1)) {
+      if ($input == 0) {
+         print "Returning to violation search\n";
+      } elsif ($input > 0 && $input <= ($#results + 1)) {
          push @violations, $results[$input - 1];
       } else {
          print "Invalid index\n";
