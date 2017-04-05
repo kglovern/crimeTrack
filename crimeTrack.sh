@@ -39,4 +39,5 @@ if [ -f $INFILE ]
       perl plotCrime.pl output.data $OUTFILE
       clear
       echo "Answer PDF located at $OUTFILE"
+      open $OUTFILE
 fi
