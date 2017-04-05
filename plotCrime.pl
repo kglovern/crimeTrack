@@ -130,7 +130,7 @@ if ($fields[0] == 1) {
     geom_point(size=1) + ggtitle("$graphTitle") + ylab("Rate per 100,000 population") +
     ylim(min(data\$Value), max(data\$Value)) + xlim(min(data\$Year), max(data\$Year)) +
     scale_x_continuous(breaks=seq(min(data\$Year), max(data\$Year), 1)) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + facet_wrap(~Geo, ncol = 3)`);
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) + facet_grid(Vio~.)`);
 } elsif ($fields[0] == 4) {
     $graphTitle = "Incident Rate for the Nation ".$fields[1]." - ".$fields[2];
     $R->run(qq`ggplot(data, aes(x=Year, y=Value, group=Vio, colour=Vio)) + geom_line() +
