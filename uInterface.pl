@@ -48,6 +48,7 @@ sub searchHash;
 sub minWarning;
 sub promptContinue;
 sub getNumeric;
+sub printHeader;
 
 #
 # Set output file based on command line args
@@ -67,8 +68,10 @@ if ($#ARGV != 0) {
 %locData = loadLocs("data/locs.data");
 
 #
-# Header - Some sort of welcome message
+# Header
 #
+printHeader();
+
 
 #
 # Main Menu
@@ -198,13 +201,15 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
 
       print "\nTerms matching $input:\n";
       for my $index ( 0 .. $#results ) {
+        print "0) Go back\n";
          printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
       $input = getInput("Select the number corresponding to the violation:");
       if ($input > 0 && $input <= ($#results + 1)) {
          push @violations, $results[$input - 1];
-      } else {
+      }
+      elsif ($input != 0) {
          print "Invalid index\n";
       }
    } else {
@@ -450,4 +455,18 @@ sub getYearRange {
    $max = max (@dataYears);
 
    return ($min, $max);
+}
+
+#
+# Prints header... pretty simple
+# usage: printHeader();
+#
+sub printHeader {
+    print "\n**************************************************************************\n";
+    print "Welcome to Team Sarnias Crime Statistics Application\n";
+    print "created by Quinton, Jackson, Kevin, and Mitchell.\n";
+    print "This program looks at crime statistics and answers questions\n";
+    print "posed by the user. Once the user asks a question, a pdf containing\n";
+    print "the answer will be created and placed in the OUTPUT folder.\n";
+    print "**************************************************************************\n\n";
 }
