@@ -20,4 +20,4 @@ Answers to the query will be outputted in a PDF graph format
 # Known Issues/workarounds
 - User must have read/write permissions for the working directory
 - Inputting a start year that is less than the end year will intentionally result in a data range consisting only of the start year
--
+- 
