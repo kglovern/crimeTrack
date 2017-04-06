@@ -205,7 +205,7 @@ while ($#violations < ($vioMin - 1) || $nextInput == 1) {
          printf "%d) %s\n", ($index + 1), $results[$index];
       }
 
-      $input = getInput("Select the number corresponding to the violation:");
+      $input = getNumeric("Select the number corresponding to the violation:", 0, ($#results + 1));
       if ($input == 0) {
          print "Returning to violation search\n";
       } elsif ($input > 0 && $input <= ($#results + 1)) {
